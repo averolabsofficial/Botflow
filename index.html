@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BotFlow Studio — Autonomous Bot Architect</title>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -13,9 +13,8 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #030712;
-      --card-bg: rgba(15, 23, 42, 0.78);
+      --card-bg: rgba(15, 23, 42, 0.75);
       --accent: #6366f1;
-      --accent-glow: rgba(99, 102, 241, 0.45);
       --cyan: #06b6d4;
       --emerald: #10b981;
       --amber: #f59e0b;
@@ -31,45 +30,45 @@
       flex-direction: column;
       user-select: none;
     }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
-    /* Animated Ambient Glowing Radial Background */
+    /* Animated Ambient Lights */
     .ambient-orb {
       position: absolute;
       border-radius: 50%;
-      filter: blur(85px);
+      filter: blur(80px);
       pointer-events: none;
-      animation: floatOrb 14s ease-in-out infinite alternate;
+      animation: floatOrb 12s ease-in-out infinite alternate;
     }
-    .orb-1 { top: -12%; left: 15%; width: 480px; height: 480px; background: rgba(99, 102, 241, 0.28); }
-    .orb-2 { bottom: -12%; right: 15%; width: 520px; height: 520px; background: rgba(6, 182, 212, 0.22); animation-delay: -6s; }
+    .orb-1 { top: -10%; left: 15%; width: 450px; height: 450px; background: rgba(99, 102, 241, 0.25); }
+    .orb-2 { bottom: -10%; right: 15%; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.2); animation-delay: -5s; }
     @keyframes floatOrb {
       0% { transform: translate(0, 0) scale(1); }
-      100% { transform: translate(45px, 45px) scale(1.12); }
+      100% { transform: translate(40px, 40px) scale(1.1); }
     }
 
-    /* Floating Bot in Auth Gate */
+    /* Floating Bot Animation */
     .floating-bot {
       width: 68px;
       height: 68px;
-      border-radius: 22px;
+      border-radius: 20px;
       background: linear-gradient(135deg, #6366f1, #06b6d4);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 32px;
-      box-shadow: 0 0 35px rgba(99, 102, 241, 0.55);
+      box-shadow: 0 0 35px rgba(99, 102, 241, 0.5);
       margin: 0 auto 16px auto;
-      animation: botBounce 3.2s ease-in-out infinite;
+      animation: botBounce 3s ease-in-out infinite;
     }
     @keyframes botBounce {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
+      50% { transform: translateY(-10px); }
     }
 
-    /* Glassmorphism Primitives */
+    /* Glassmorphism */
     .hyper-glass {
-      background: rgba(15, 23, 42, 0.78);
+      background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(28px) saturate(190%);
       -webkit-backdrop-filter: blur(28px) saturate(190%);
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -77,7 +76,7 @@
                   0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     }
 
-    /* Auth Gate Overlay */
+    /* Gate / Entry Overlay */
     #gate-screen {
       position: fixed;
       inset: 0;
@@ -90,7 +89,7 @@
     }
     #gate-screen.exit-gate {
       opacity: 0;
-      transform: scale(1.06);
+      transform: scale(1.05);
       pointer-events: none;
     }
     .gate-card {
@@ -102,7 +101,7 @@
       position: relative;
     }
 
-    /* Top Navigation Header */
+    /* Header */
     header {
       height: 56px;
       padding: 0 20px;
@@ -110,8 +109,8 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(10, 14, 26, 0.9);
-      backdrop-filter: blur(14px);
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(12px);
       z-index: 50;
     }
     .brand-logo {
@@ -130,10 +129,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 14px rgba(99, 102, 241, 0.4);
     }
 
-    /* Views */
+    /* View Container & Strict Display Handlers */
     .view-container { flex: 1; position: relative; overflow: hidden; height: calc(100vh - 56px); }
     .screen { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
     .screen.active { display: flex !important; }
@@ -231,7 +229,7 @@
     .conn-path:hover { stroke: #f43f5e; stroke-width: 4; }
     .live-wire { fill: none; stroke: #38bdf8; stroke-width: 3; stroke-dasharray: 4 2; filter: drop-shadow(0 0 8px #38bdf8); }
 
-    /* Nodes & Ports */
+    /* Nodes & High-Affinity Ports */
     .flow-node {
       position: absolute;
       width: 280px;
@@ -312,41 +310,12 @@
       cursor: pointer;
     }
 
-    /* Padlock Icon & Secure Verification Styles */
-    .padlock-icon-box {
-      width: 64px;
-      height: 64px;
-      border-radius: 20px;
-      background: rgba(99, 102, 241, 0.15);
-      border: 1px solid rgba(99, 102, 241, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 12px auto;
-      font-size: 30px;
-      color: #fbbf24;
-      box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
-      transition: all 0.4s;
-    }
-    .padlock-icon-box.unlocked-pulse {
-      background: rgba(16, 185, 129, 0.2);
-      border-color: #10b981;
-      color: #34d399;
-      box-shadow: 0 0 35px rgba(16, 185, 129, 0.5);
-      animation: unlockCelebrate 0.8s ease forwards;
-    }
-    @keyframes unlockCelebrate {
-      0% { transform: scale(0.9); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
-    }
-
     /* Modals */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.84);
-      backdrop-filter: blur(14px);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -356,7 +325,7 @@
       transition: opacity 0.25s ease;
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
-    .modal-dialog { width: 90%; max-width: 450px; border-radius: 20px; padding: 26px; }
+    .modal-dialog { width: 90%; max-width: 440px; border-radius: 20px; padding: 26px; }
 
     /* Radar Verification Loader */
     .radar-box {
@@ -399,7 +368,7 @@
 </head>
 <body>
 
-  <!-- 1. HERO GATE & AUTHENTICATION (NO PRE-FILLED VALUES) -->
+  <!-- 1. HERO GATE & AUTHENTICATION -->
   <div id="gate-screen">
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
@@ -420,7 +389,7 @@
         </button>
       </div>
 
-      <!-- SUB-VIEW B: SIGNUP / SIGNIN FORM (STARTS COMPLETELY BLANK) -->
+      <!-- SUB-VIEW B: SIGNUP / SIGNIN FORM -->
       <div id="gate-auth-box" style="display:none; text-align:left;">
         <h3 id="auth-title" style="font-size:20px; font-weight:800; margin-bottom:4px;">Create Developer Account</h3>
         <p style="font-size:11px; color:#94a3b8; margin-bottom:18px;">Enter your details to register and access the workspace.</p>
@@ -491,7 +460,7 @@
       <div class="templates-grid" id="templates-catalog"></div>
     </div>
 
-    <!-- 3. STUDIO WORKSPACE CANVAS -->
+    <!-- 3. STUDIO WORKSPACE -->
     <div id="screen-studio" class="screen">
       <aside class="studio-sidebar">
         <p style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase;">Node Palette</p>
@@ -512,7 +481,7 @@
         </div>
 
         <div style="margin-top:auto; padding:10px; border-radius:8px; background:rgba(0,0,0,0.4); font-size:10px; color:#94a3b8; line-height:1.4;">
-          🔌 <strong>Connect:</strong> Click <strong>"⚡ Connect Next"</strong> on a node, then click another node! Click on wire to disconnect.
+          🔌 <strong>Connect:</strong> Click <strong>"⚡ Connect"</strong> on a node, then click another node! Click on wire to disconnect.
         </div>
       </aside>
 
@@ -524,35 +493,27 @@
 
   </div>
 
-  <!-- 4. ANTI-BYPASS SECURE PAYWALL & UNLOCK MODAL -->
+  <!-- PAYWALL & EXPORT MODAL -->
   <div id="modal-paywall" class="modal-overlay">
     <div class="modal-dialog hyper-glass" style="text-align:center;">
       
-      <!-- STATE 1: PADLOCK SECURE ACCESS GATE -->
+      <!-- STATE 1: PAY QR & SUBMIT UTR -->
       <div id="step-pay-form">
-        <div id="padlock-badge" class="padlock-icon-box">🔒</div>
-        
-        <h4 style="font-size:18px; font-weight:800; margin-bottom:2px;">Bot Script Locked</h4>
-        <p style="font-size:11px; color:#f59e0b; margin-bottom:12px; font-weight:600;">Payment Verification Required to Access Source</p>
-
-        <!-- UPI Details & Locked QR -->
-        <div style="background:#fff; padding:8px; border-radius:14px; display:inline-block; margin-bottom:12px; box-shadow:0 0 25px rgba(99,102,241,0.25);">
+        <div style="background:#fff; padding:8px; border-radius:12px; display:inline-block; margin-bottom:12px; box-shadow:0 0 25px rgba(99,102,241,0.25);">
           <img src="https://quickchart.io/qr?size=140&text=upi%3A%2F%2Fpay%3Fpa%3Dadityaraj8578095389-1%40okhdfcbank%26pn%3DSangita%2520Devi%26am%3D9.00%26cu%3DINR%26tn%3DBotFlow%2520Key" width="130" height="130" alt="UPI QR">
         </div>
         
-        <p style="font-size:12px; color:#818cf8; margin-bottom:2px; font-weight:700;">Payee: Sangita Devi (₹9.00)</p>
-        <p style="font-size:10px; color:#94a3b8; margin-bottom:14px;">UPI ID: <span class="mono">adityaraj8578095389-1@okhdfcbank</span></p>
+        <h4 style="font-size:17px; font-weight:800; margin-bottom:2px;">Unlock Bot Runtime (.py)</h4>
+        <p style="font-size:11px; color:#818cf8; margin-bottom:2px;">Payee: Sangita Devi (₹9.00)</p>
+        <p style="font-size:10px; color:#94a3b8; margin-bottom:14px;">Scan with GPay/PhonePe/Paytm. Enter your 12-digit UTR below:</p>
 
-        <div style="display:flex; flex-direction:column; gap:8px; text-align:left; margin-bottom:8px;">
-          <label style="font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase;">Enter 12-Digit Bank UTR / Ref No:</label>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="user-utr-input" placeholder="e.g. 423456789012" maxlength="12" class="mono" style="letter-spacing:1px;">
-            <button onclick="submitUTRForVerification()" id="btn-submit-utr" class="btn-glow" style="padding:0 16px;">Verify & Unlock</button>
-          </div>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="text" id="user-utr-input" placeholder="12-digit Bank UTR" class="mono">
+          <button onclick="submitUTRForVerification()" id="btn-submit-utr" class="btn-glow">Submit</button>
         </div>
       </div>
 
-      <!-- STATE 2: FUTURISTIC RADAR SCANNING (WAITING FOR ADMIN CONFIRMATION) -->
+      <!-- STATE 2: LIVE RADAR VERIFYING ANIMATION -->
       <div id="step-verifying" style="display:none;">
         <div class="radar-box">
           <div class="radar-circle"></div>
@@ -561,24 +522,20 @@
           <div class="radar-icon" style="font-size:24px;">⚡</div>
         </div>
 
-        <h4 style="font-size:16px; font-weight:800; margin-bottom:4px; color:#38bdf8;">Verifying Payment with Bank Ledger...</h4>
+        <h4 style="font-size:16px; font-weight:800; margin-bottom:4px; color:#38bdf8;">Verifying Payment with Bank...</h4>
         <p style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:12px;">
-          Validating Ref: <span id="verifying-utr-tag" class="mono font-bold" style="color:#a5b4fc;"></span><br>
-          Admin is reviewing your transaction (Usually 1–2 mins).<br>
-          <span style="color:#f59e0b;">Please do not refresh this page.</span>
+          Matching UTR <span id="verifying-utr-tag" class="mono font-bold" style="color:#a5b4fc;"></span> against credit ledger.<br>
+          Admin approval usually takes <strong>1–2 minutes</strong>. Please do not close.
         </p>
         <div style="font-size:10px; color:#64748b; border:1px dashed rgba(255,255,255,0.1); padding:8px; border-radius:8px;">
-          Live status: <span class="font-bold" style="color:#fbbf24;">Waiting for Admin Approval...</span>
+          Live status: <span class="font-bold" style="color:#fbbf24;">Awaiting Admin Confirmation...</span>
         </div>
       </div>
 
-      <!-- STATE 3: UNLOCKED CODE REVEAL -->
+      <!-- STATE 3: SCRIPT UNLOCKED VIEW -->
       <div id="step-unlocked" style="display:none; text-align:left;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-          <span style="font-size:18px;">🔓</span>
-          <p style="font-size:12px; color:var(--emerald); font-weight:700;">Payment Verified & Approved by Admin!</p>
-        </div>
-        <textarea id="code-output" rows="11" readonly class="mono" style="font-size:10px; color:#a5b4fc; margin-bottom:10px;"></textarea>
+        <p style="font-size:11px; color:var(--emerald); font-weight:700; margin-bottom:6px;">✓ Payment Confirmed & Unlocked by Admin!</p>
+        <textarea id="code-output" rows="10" readonly class="mono" style="font-size:10px; color:#a5b4fc; margin-bottom:10px;"></textarea>
         <div style="display:flex; justify-content:flex-end; gap:8px;">
           <button onclick="copyPythonCode()" class="btn-secondary">Copy Script</button>
           <button onclick="downloadPythonScript()" class="btn-glow">Download bot.py</button>
@@ -589,9 +546,9 @@
     </div>
   </div>
 
-  <!-- SECRET ADMIN VERIFICATION TERMINAL (Triple-Click Logo to Open) -->
+  <!-- SECRET ADMIN VERIFICATION PANEL MODAL (Triple-click Logo to Open) -->
   <div id="modal-admin" class="modal-overlay">
-    <div class="modal-dialog hyper-glass" style="max-width:580px;">
+    <div class="modal-dialog hyper-glass" style="max-width:560px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
@@ -601,7 +558,7 @@
       </div>
 
       <p style="font-size:11px; color:#94a3b8; margin-bottom:12px;">
-        Match incoming credits in your HDFC statement. Click <strong>"Approve"</strong> to unlock user's screen in real-time.
+        Check your Bank SMS / HDFC Statement. Click <strong>"Approve"</strong> to instantly unlock the user's screen.
       </p>
 
       <div style="max-height:280px; overflow-y:auto; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:6px;">
@@ -611,20 +568,19 @@
               <th>Time</th>
               <th>User</th>
               <th>UTR Number</th>
-              <th>Amount</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody id="admin-table-body">
-            <tr><td colspan="6" style="text-align:center; color:#64748b;">Loading requests...</td></tr>
+            <tr><td colspan="5" style="text-align:center; color:#64748b;">No pending requests yet.</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- OBFUSCATED ENGINE & SECURE INITIALIZER -->
+  <!-- OBFUSCATED ENGINE & SECURE DECODER -->
   <script>
     (function(){
       const _0x5a1b=['QUl6YVN5QUtRRk90dUxpaHg1VFFtd1VuMGFCek5wTG82ZFJySk04','Ym90Zmxvdy1mZjkzNS5maXJlYmFzZWFwcC5jb20=','Ym90Zmxvdy1mZjkzNQ==','Ym90Zmxvdy1mZjkzNS5maXJlYmFzZXN0b3JhZ2UuYXBw','OTA0NzAyNzA4OTQ0','MTo5MDQ3MDI3MDg5NDQ6d2ViOjdjNDM3NDExOGI1NTQ1MTkwZGEyZDU=','Ry1IM1NFR1dZOUYy'];
@@ -664,13 +620,10 @@
     window.addEventListener('DOMContentLoaded', () => {
       renderTemplateCards();
       setupLiveWireTracking();
-      // Persistent verification check
-      if (localStorage.getItem('botflow_unlocked') === 'true') {
-        isKeyUnlocked = true;
-      }
+      if (localStorage.getItem('botflow_unlocked') === 'true') isKeyUnlocked = true;
     });
 
-    // 1st Page Auth Gate Flow
+    // 1st Page Flow
     function revealAuthForm() {
       document.getElementById('gate-welcome-box').style.display = 'none';
       document.getElementById('gate-auth-box').style.display = 'block';
@@ -691,7 +644,7 @@
       const pass = document.getElementById('in-pass').value.trim();
 
       if (!email || pass.length < 6) {
-        return alert("Please enter a valid email and at least 6 characters passkey.");
+        return alert("Kripya valid email aur kam se kam 6 character passkey daalein.");
       }
 
       const userName = name || email.split('@')[0];
@@ -730,6 +683,7 @@
       `).join('');
     }
 
+    // FIXED SCREEN SWITCHING LOGIC (NO BLANK DISPLAY)
     function switchView(view) {
       const dash = document.getElementById('screen-dashboard');
       const studio = document.getElementById('screen-studio');
@@ -754,6 +708,7 @@
       drawConnections();
       switchView('studio');
       
+      // Auto add initial command cleanly
       setTimeout(() => {
         createNode('command', 60, 60);
       }, 50);
@@ -802,6 +757,7 @@
       }, 50);
     }
 
+    // Node & Wire Wiring
     function handleDrag(e, type) { dragType = type; }
     function handleDrop(e) {
       e.preventDefault();
@@ -943,6 +899,7 @@
       drawConnections();
     }
 
+    // Realtime Connections
     function startWireConnect(fromId) {
       activeWireSource = fromId;
       document.getElementById('live-cable').style.display = 'block';
@@ -1029,7 +986,7 @@
       window.addEventListener('mouseup', () => { isDown = false; el.style.zIndex = 15; });
     }
 
-    // Dynamic generator called ONLY when isKeyUnlocked === true
+    // Python Compilation Engine
     function generateFullPython() {
       let script = `import telebot, random\nfrom telebot.types import InlineKeyboardMarkup, InlineKeyboardButton\n\nBOT_TOKEN = "YOUR_BOT_TOKEN_HERE"\nbot = telebot.TeleBot(BOT_TOKEN)\n\n`;
 
@@ -1082,18 +1039,15 @@
 
     function toggleModal(id) { document.getElementById(id).classList.toggle('open'); }
 
-    // ANTI-BYPASS SECURE LOCK TRIGGER:
-    // If not unlocked, never compute or store code in textarea
     function openCompilerModal() {
+      const code = generateFullPython();
+      document.getElementById('code-output').value = code;
+
       if (isKeyUnlocked) {
-        // Safe to generate code
-        document.getElementById('code-output').value = generateFullPython();
         document.getElementById('step-pay-form').style.display = 'none';
         document.getElementById('step-verifying').style.display = 'none';
         document.getElementById('step-unlocked').style.display = 'block';
       } else {
-        // Enforce lock screen with padlock
-        document.getElementById('code-output').value = ""; // Zero code in memory/DOM
         document.getElementById('step-pay-form').style.display = 'block';
         document.getElementById('step-verifying').style.display = 'none';
         document.getElementById('step-unlocked').style.display = 'none';
@@ -1101,17 +1055,11 @@
       toggleModal('modal-paywall');
     }
 
+    // Realtime UTR Verification & Firebase Logging
     async function submitUTRForVerification() {
       const utr = document.getElementById('user-utr-input').value.trim();
-      
-      // Strict 12-digit numeric validation
-      if (!/^\d{12}$/.test(utr)) {
-        return alert("Invalid Reference: UPI UTR must contain exactly 12 numeric digits.");
-      }
-
-      // Check for fake repetitives
-      if (/^(\d)\1{11}$/.test(utr) || utr === "123456789012" || utr === "987654321098") {
-        return alert("Fraud Warning: Test pattern or invalid UTR detected. Please enter your genuine 12-digit transaction number.");
+      if (utr.length !== 12 || !/^\d+$/.test(utr)) {
+        return alert("Kripya valid 12-digit numeric UPI UTR / Reference number enter karein.");
       }
 
       const btn = document.getElementById('btn-submit-utr');
@@ -1121,7 +1069,6 @@
       const userName = activeUser ? activeUser.name : "Developer";
 
       try {
-        // 1. Push to Firestore
         await db.collection("payment_requests").doc(utr).set({
           utr: utr,
           amount: 9,
@@ -1132,36 +1079,20 @@
           clientTime: new Date().toLocaleTimeString()
         });
 
-        // 2. Transition UI to radar animation
         document.getElementById('step-pay-form').style.display = 'none';
         document.getElementById('step-verifying').style.display = 'block';
         document.getElementById('verifying-utr-tag').innerText = utr;
 
-        // 3. Listen in real-time for admin approval
         if (activePaymentListener) activePaymentListener();
         activePaymentListener = db.collection("payment_requests").doc(utr)
           .onSnapshot((docSnapshot) => {
             if (docSnapshot.exists) {
               const data = docSnapshot.data();
               if (data.status === "approved") {
-                // Admin Approved!
                 isKeyUnlocked = true;
                 localStorage.setItem('botflow_unlocked', 'true');
-                
-                // Play padlock unlock celebration
-                const badge = document.getElementById('padlock-badge');
-                badge.innerText = '🔓';
-                badge.classList.add('unlocked-pulse');
-
-                // Dynamically compile Python script now
-                document.getElementById('code-output').value = generateFullPython();
-
-                // Reveal unlocked screen
-                setTimeout(() => {
-                  document.getElementById('step-verifying').style.display = 'none';
-                  document.getElementById('step-unlocked').style.display = 'block';
-                }, 400);
-
+                document.getElementById('step-verifying').style.display = 'none';
+                document.getElementById('step-unlocked').style.display = 'block';
               } else if (data.status === "rejected") {
                 alert("Payment Verification Failed: Admin could not verify this UTR in bank credit logs.");
                 document.getElementById('step-verifying').style.display = 'none';
@@ -1171,9 +1102,9 @@
           });
 
       } catch (err) {
-        alert("Firestore Error: " + err.message + "\nEnsure rules are set to: allow read, write: if true;");
+        alert("Firestore Permission Error: Check if Firestore rules are set to 'allow read, write: if true;'\n" + err.message);
       } finally {
-        btn.innerText = "Verify & Unlock";
+        btn.innerText = "Submit";
         btn.disabled = false;
       }
     }
@@ -1199,10 +1130,10 @@
       
       db.collection("payment_requests")
         .orderBy("timestamp", "desc")
-        .limit(20)
+        .limit(15)
         .onSnapshot((snap) => {
           if (!snap || snap.empty) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b;">No pending requests yet.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b;">No pending requests yet.</td></tr>`;
             return;
           }
 
@@ -1216,9 +1147,8 @@
                 <td style="color:#94a3b8;">${timeStr}</td>
                 <td style="color:#cbd5e1; font-weight:600;">${p.user || 'Unknown'}</td>
                 <td class="mono font-bold" style="color:#a5b4fc;">${p.utr}</td>
-                <td style="color:#34d399; font-weight:bold;">₹${p.amount || 9}</td>
                 <td>
-                  <span style="padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; background:${p.status==='approved'?'rgba(16,185,129,0.2)':p.status==='rejected'?'rgba(244,63,94,0.2)':'rgba(245,158,11,0.2)'}; color:${p.status==='approved'?'#34d399':p.status==='rejected'?'#fb7185':'#fbbf24'};">
+                  <span style="padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; background:${p.status==='approved'?'rgba(16,185,129,0.2)':'rgba(245,158,11,0.2)'}; color:${p.status==='approved'?'#34d399':'#fbbf24'};">
                     ${(p.status || 'PENDING').toUpperCase()}
                   </span>
                 </td>
@@ -1232,7 +1162,7 @@
             `;
           }).join('');
         }, (err) => {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#f43f5e;">Firestore error: ${err.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#f43f5e;">Firestore error: ${err.message}</td></tr>`;
         });
     }
 
