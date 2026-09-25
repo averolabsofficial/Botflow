@@ -4,14 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BotFlow Studio — Autonomous Bot Architect</title>
+
+  <!-- Firebase Compat (Async deferred for high performance) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #05070e;
-      --card-bg: rgba(15, 23, 42, 0.75);
-      --card-border: rgba(99, 102, 241, 0.18);
+      --bg: #030712;
+      --card-bg: rgba(15, 23, 42, 0.7);
       --accent: #6366f1;
-      --accent-glow: rgba(99, 102, 241, 0.35);
       --emerald: #10b981;
       --amber: #f59e0b;
       --rose: #f43f5e;
@@ -29,41 +32,15 @@
     }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
-    /* Keyframe Animations */
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 15px var(--accent-glow); }
-      50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.6); }
-    }
-    @keyframes scanline {
-      0% { transform: translateY(-100%); }
-      100% { transform: translateY(100%); }
-    }
-    @keyframes modalPop {
-      0% { opacity: 0; transform: scale(0.92) translateY(10px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    @keyframes floatParticle {
-      0% { transform: translateY(0); opacity: 0.8; }
-      100% { transform: translateY(-80px); opacity: 0; }
+    /* Glassmorphism */
+    .hyper-glass {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
     }
 
-    /* Glassmorphism Classes */
-    .glass {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-    }
-    .glass-interactive {
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .glass-interactive:hover {
-      border-color: rgba(99, 102, 241, 0.5);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
-    }
-
-    /* Header */
     header {
       height: 56px;
       padding: 0 20px;
@@ -71,8 +48,7 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(10, 14, 26, 0.9);
-      backdrop-filter: blur(12px);
+      background: rgba(10, 14, 26, 0.85);
       z-index: 50;
     }
     .brand-logo {
@@ -80,8 +56,8 @@
       align-items: center;
       gap: 10px;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      font-size: 17px;
+      font-size: 16px;
+      cursor: pointer;
     }
     .brand-badge {
       width: 28px;
@@ -91,7 +67,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
       box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
     }
 
@@ -100,20 +75,15 @@
     .screen { position: absolute; inset: 0; display: none; }
     .screen.active { display: flex; }
 
-    /* Dashboard Screen */
-    #dashboard-screen {
+    /* Dashboard */
+    #screen-dashboard {
       flex-direction: column;
       padding: 30px 40px;
       overflow-y: auto;
-      background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.12) 0%, transparent 60%);
+      background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
     }
-    .dash-header { margin-bottom: 25px; }
-    .dash-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
-    .dash-sub { font-size: 13px; color: #94a3b8; }
-
-    /* Hero "+ New Bot" Card */
     .create-hero-card {
-      padding: 30px;
+      padding: 28px;
       border-radius: 20px;
       border: 2px dashed rgba(99, 102, 241, 0.4);
       background: rgba(15, 23, 42, 0.4);
@@ -122,19 +92,18 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      margin-bottom: 35px;
+      gap: 10px;
+      margin-bottom: 30px;
       transition: all 0.3s;
     }
     .create-hero-card:hover {
       border-color: #6366f1;
       background: rgba(99, 102, 241, 0.08);
-      box-shadow: 0 0 35px rgba(99, 102, 241, 0.25);
-      transform: scale(1.01);
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);
     }
     .plus-circle {
-      width: 54px;
-      height: 54px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       background: linear-gradient(135deg, #6366f1, #3b82f6);
       display: flex;
@@ -142,17 +111,11 @@
       justify-content: center;
       font-size: 26px;
       font-weight: 700;
-      color: #fff;
-      box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
     }
-
-    /* Template Grid */
-    .grid-title { font-size: 15px; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
     .templates-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 18px;
-      padding-bottom: 40px;
+      gap: 16px;
     }
     .tpl-card {
       padding: 18px;
@@ -160,23 +123,19 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 160px;
+      height: 155px;
       cursor: pointer;
+      transition: all 0.25s;
     }
-    .tpl-tag {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
-      width: fit-content;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .tpl-card:hover {
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-3px);
     }
 
-    /* Canvas / Studio View */
-    #studio-screen { display: none; height: 100%; position: relative; }
+    /* Studio */
+    #screen-studio { display: none; height: 100%; position: relative; }
     .studio-sidebar {
-      width: 260px;
+      width: 250px;
       background: rgba(10, 14, 26, 0.85);
       border-right: 1px solid rgba(255, 255, 255, 0.08);
       padding: 16px;
@@ -189,28 +148,16 @@
       flex: 1;
       position: relative;
       background-size: 24px 24px;
-      background-image: 
-        radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
       background-color: var(--bg);
       overflow: hidden;
     }
-    #svg-connections {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 5;
-    }
-    .conn-path {
-      fill: none;
-      stroke: #6366f1;
-      stroke-width: 2.5;
-      stroke-dasharray: 6 3;
-      filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.6));
-    }
+    #svg-connections { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+    .conn-path { fill: none; stroke: #6366f1; stroke-width: 3; stroke-dasharray: 6 3; cursor: pointer; pointer-events: stroke; }
+    .conn-path:hover { stroke: #f43f5e; }
+    .live-wire { fill: none; stroke: #38bdf8; stroke-width: 3; stroke-dasharray: 4 2; }
 
-    /* Nodes & Ports */
+    /* Nodes */
     .flow-node {
       position: absolute;
       width: 280px;
@@ -230,53 +177,24 @@
       font-weight: 700;
     }
     .node-content { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-    
-    /* Ports for Arrow connections */
-    .port {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #6366f1;
-      border: 2px solid #fff;
-      position: absolute;
-      box-shadow: 0 0 10px #6366f1;
-      cursor: crosshair;
-    }
-    .port-in { top: 50%; left: -6px; transform: translateY(-50%); }
-    .port-out { top: 50%; right: -6px; transform: translateY(-50%); }
 
-    /* Multi-Button Builder */
-    .btn-item-row {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 6px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
     input, textarea, select {
       width: 100%;
       background: rgba(5, 7, 14, 0.7);
       border: 1px solid rgba(255, 255, 255, 0.12);
       color: #fff;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 11px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
       outline: none;
-      transition: border-color 0.2s;
     }
-    input:focus, textarea:focus, select:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
-    }
+    input:focus, textarea:focus, select:focus { border-color: #6366f1; }
 
-    /* Buttons */
     .btn-glow {
       background: linear-gradient(135deg, #6366f1, #4f46e5);
       color: #fff;
-      padding: 8px 16px;
-      border-radius: 10px;
+      padding: 9px 18px;
+      border-radius: 12px;
       font-size: 12px;
       font-weight: 700;
       border: none;
@@ -286,10 +204,7 @@
       gap: 6px;
       transition: all 0.2s;
     }
-    .btn-glow:hover {
-      box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
-      transform: translateY(-1px);
-    }
+    .btn-glow:hover { box-shadow: 0 0 20px rgba(99, 102, 241, 0.6); }
     .btn-secondary {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -299,14 +214,13 @@
       font-size: 11px;
       cursor: pointer;
     }
-    .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
 
     /* Modals */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -315,56 +229,65 @@
       pointer-events: none;
       transition: opacity 0.25s ease;
     }
-    .modal-overlay.open {
-      opacity: 1;
-      pointer-events: all;
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-dialog { width: 90%; max-width: 440px; border-radius: 20px; padding: 26px; }
+
+    /* Radar Verification Loader Animation */
+    .radar-box {
+      width: 100px;
+      height: 100px;
+      margin: 15px auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .modal-dialog {
-      width: 90%;
-      max-width: 440px;
-      border-radius: 20px;
-      padding: 26px;
-      animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    .radar-circle {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid rgba(99, 102, 241, 0.4);
+      animation: pulseRadar 2s ease-out infinite;
+    }
+    .radar-circle:nth-child(2) { animation-delay: 0.6s; }
+    .radar-circle:nth-child(3) { animation-delay: 1.2s; }
+    @keyframes pulseRadar {
+      0% { transform: scale(0.3); opacity: 1; border-color: #6366f1; }
+      100% { transform: scale(1.4); opacity: 0; border-color: #06b6d4; }
+    }
+    .radar-icon { font-size: 28px; z-index: 2; animation: spinGlow 3s linear infinite; }
+    @keyframes spinGlow {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
-    /* Paywall Animation */
-    .qr-scanner-box {
-      position: relative;
-      width: 160px;
-      height: 160px;
-      margin: 0 auto 15px auto;
-      border-radius: 16px;
-      background: #fff;
-      padding: 10px;
-      overflow: hidden;
-      box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+    /* Admin Table Styling */
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 10px;
     }
-    .qr-scanner-line {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #6366f1, transparent);
-      box-shadow: 0 0 10px #6366f1;
-      animation: scanline 2.2s linear infinite;
+    .admin-table th, .admin-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
     }
+    .admin-table th { color: #94a3b8; font-weight: 700; text-transform: uppercase; font-size: 9px; }
   </style>
 </head>
 <body>
 
   <!-- Topbar -->
   <header>
-    <div class="brand-logo">
+    <div class="brand-logo" onclick="registerLogoClick()" title="Triple click for Admin Panel">
       <div class="brand-badge">⚡</div>
       <span>BotFlow<span style="color:var(--accent);">.Studio</span></span>
     </div>
 
     <div style="display:flex; align-items:center; gap:10px;">
-      <div id="auth-pill" style="display:flex; align-items:center; gap:8px;">
-        <button onclick="toggleModal('modal-auth')" id="btn-login-trig" class="btn-secondary">Sign In / Register</button>
-        <span id="user-status-tag" class="mono" style="font-size:11px; color:#a5b4fc; display:none;"></span>
-      </div>
-
+      <span id="user-status-tag" class="mono" style="font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); padding:4px 10px; border-radius:8px;">User: Aditya Raj</span>
       <button onclick="switchView('dashboard')" id="btn-to-dash" class="btn-secondary" style="display:none;">Dashboard</button>
       <button onclick="openCompilerModal()" id="btn-compile" class="btn-glow" style="display:none;">
         <span>Compile Bot (.py)</span>
@@ -375,100 +298,98 @@
   <!-- View Router -->
   <div class="view-container">
 
-    <!-- 1. DASHBOARD VIEW (Templates + Blank Canvas) -->
-    <div id="screen-dashboard" class="screen active" style="flex-direction:column; padding:30px 40px; overflow-y:auto;">
-      <div class="dash-header">
-        <h1 class="dash-title">Bot Project Workspace</h1>
-        <p class="dash-sub">Choose a pre-configured architecture or architect a blank pipeline.</p>
+    <!-- DASHBOARD VIEW -->
+    <div id="screen-dashboard" class="screen active">
+      <div style="margin-bottom:25px;">
+        <h1 style="font-size:24px; font-weight:800; letter-spacing:-0.5px; margin-bottom:6px;">Welcome back, Aditya Raj!</h1>
+        <p style="font-size:13px; color:#94a3b8;">Choose a pre-configured architecture or build a blank pipeline.</p>
       </div>
 
-      <!-- Blank Canvas Generator -->
       <div class="create-hero-card" onclick="startBlankProject()">
         <div class="plus-circle">+</div>
         <p style="font-size:15px; font-weight:700;">Create Blank Bot Canvas</p>
-        <p style="font-size:11px; color:#94a3b8;">Full visual freedom — connect custom commands & interactive branching</p>
+        <p style="font-size:11px; color:#94a3b8;">Full visual freedom with connecting wires</p>
       </div>
 
-      <!-- Template Catalog -->
-      <div class="grid-title">
-        <span>⚡ Ready-to-Deploy Architectures (50+ Presets Engine)</span>
-      </div>
-
-      <div class="templates-grid" id="templates-catalog">
-        <!-- Rendered by JS -->
-      </div>
+      <div style="font-size:14px; font-weight:700; margin-bottom:14px;">⚡ Ready-to-Deploy Architectures</div>
+      <div class="templates-grid" id="templates-catalog"></div>
     </div>
 
-    <!-- 2. STUDIO WORKSPACE (Visual Canvas) -->
-    <div id="screen-studio" class="screen" style="height:100%;">
+    <!-- STUDIO VIEW -->
+    <div id="screen-studio" class="screen">
       <aside class="studio-sidebar">
-        <p style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase;">Node Library</p>
-
-        <div draggable="true" ondragstart="handleDrag(event, 'command')" class="glass glass-interactive" style="padding:10px; border-radius:10px; cursor:grab;">
+        <p style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase;">Node Palette</p>
+        
+        <div draggable="true" ondragstart="handleDrag(event, 'command')" class="hyper-glass" style="padding:10px; border-radius:10px; cursor:grab;">
           <strong style="color:var(--emerald); font-size:12px;">/ Command Trigger</strong>
-          <p style="font-size:10px; color:#94a3b8;">Listens for /start, /help etc.</p>
+          <p style="font-size:10px; color:#94a3b8;">Listens for /start, /help</p>
         </div>
 
-        <div draggable="true" ondragstart="handleDrag(event, 'buttons')" class="glass glass-interactive" style="padding:10px; border-radius:10px; cursor:grab;">
+        <div draggable="true" ondragstart="handleDrag(event, 'buttons')" class="hyper-glass" style="padding:10px; border-radius:10px; cursor:grab;">
           <strong style="color:var(--amber); font-size:12px;">🎛 Multi-Buttons Grid</strong>
-          <p style="font-size:10px; color:#94a3b8;">Multiple actions, links, dice</p>
+          <p style="font-size:10px; color:#94a3b8;">Dice, links & dynamic replies</p>
         </div>
 
-        <div draggable="true" ondragstart="handleDrag(event, 'mod_guard')" class="glass glass-interactive" style="padding:10px; border-radius:10px; cursor:grab;">
+        <div draggable="true" ondragstart="handleDrag(event, 'mod_guard')" class="hyper-glass" style="padding:10px; border-radius:10px; cursor:grab;">
           <strong style="color:var(--rose); font-size:12px;">🛡 Rude Word Guardian</strong>
-          <p style="font-size:10px; color:#94a3b8;">Auto-detect, warn & kick</p>
+          <p style="font-size:10px; color:#94a3b8;">Detect rude words & kick/warn</p>
         </div>
 
-        <div style="margin-top:auto; padding:10px; border-radius:8px; background:rgba(0,0,0,0.3); font-size:10px; color:#64748b;">
-          💡 <strong>Tip:</strong> Drag from circular port to link commands with arrows.
+        <div style="margin-top:auto; padding:10px; border-radius:8px; background:rgba(0,0,0,0.4); font-size:10px; color:#94a3b8;">
+          🔌 <strong>Connect:</strong> Click <strong>"⚡ Connect"</strong> on a node, then click another node!
         </div>
       </aside>
 
       <main class="canvas-viewport" id="canvas-workspace" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
-        <svg id="svg-connections"></svg>
+        <svg id="svg-connections"><path id="live-cable" class="live-wire" d="" style="display:none;"></path></svg>
         <div id="nodes-layer" style="position:relative; width:100%; height:100%;"></div>
       </main>
     </div>
 
   </div>
 
-  <!-- AUTH MODAL -->
-  <div id="modal-auth" class="modal-overlay">
-    <div class="modal-dialog glass">
-      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-        <h3 id="auth-title" style="font-size:16px; font-weight:800;">Account Authentication</h3>
-        <span onclick="toggleModal('modal-auth')" style="cursor:pointer; color:#94a3b8;">&times;</span>
-      </div>
-
-      <div style="display:flex; flex-direction:column; gap:10px;">
-        <input type="email" id="auth-email-in" placeholder="Email Address">
-        <input type="password" id="auth-pass-in" placeholder="Password (Min 6 chars)">
-        <button onclick="performAuth()" class="btn-glow" style="width:100%; justify-content:center; padding:10px;">Authenticate & Enter</button>
-      </div>
-    </div>
-  </div>
-
   <!-- PAYWALL & EXPORT MODAL -->
   <div id="modal-paywall" class="modal-overlay">
-    <div class="modal-dialog glass" style="max-width:480px; text-align:center;">
-      <div id="pay-flow-initial">
-        <div class="qr-scanner-box">
-          <div class="qr-scanner-line"></div>
-          <img src="https://quickchart.io/qr?size=140&text=upi%3A%2F%2Fpay%3Fpa%3Dadityaraj8578095389-1%40okhdfcbank%26pn%3DSangita%2520Devi%26am%3D9.00%26cu%3DINR%26tn%3DBotFlow%2520Engine%2520Key" width="140" height="140" alt="UPI QR">
+    <div class="modal-dialog hyper-glass" style="text-align:center;">
+      
+      <!-- STATE 1: PAY QR & SUBMIT UTR -->
+      <div id="step-pay-form">
+        <div style="background:#fff; padding:8px; border-radius:12px; display:inline-block; margin-bottom:12px; box-shadow:0 0 25px rgba(99,102,241,0.25);">
+          <img src="https://quickchart.io/qr?size=140&text=upi%3A%2F%2Fpay%3Fpa%3Dadityaraj8578095389-1%40okhdfcbank%26pn%3DSangita%2520Devi%26am%3D9.00%26cu%3DINR%26tn%3DBotFlow%2520Key" width="130" height="130" alt="UPI QR">
         </div>
         
-        <h4 style="font-size:18px; font-weight:800; margin-bottom:2px;">Unlock Bot Runtime (.py)</h4>
-        <p style="font-size:11px; color:#818cf8; margin-bottom:4px;">Payee: Sangita Devi (₹9.00)</p>
-        <p style="font-size:10px; color:#94a3b8; margin-bottom:15px;">Scan through GPay / PhonePe / Paytm. Enter the 12-digit UTR:</p>
+        <h4 style="font-size:17px; font-weight:800; margin-bottom:2px;">Unlock Bot Runtime (.py)</h4>
+        <p style="font-size:11px; color:#818cf8; margin-bottom:2px;">Payee: Sangita Devi (₹9.00)</p>
+        <p style="font-size:10px; color:#94a3b8; margin-bottom:14px;">Scan with GPay/PhonePe/Paytm. Enter your 12-digit UTR below:</p>
 
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <input type="text" id="pay-utr" placeholder="12-digit numeric Bank UTR" class="mono">
-          <button onclick="verifyPaymentState()" id="btn-unlock-verify" class="btn-glow">Unlock</button>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="text" id="user-utr-input" placeholder="12-digit Bank UTR" class="mono">
+          <button onclick="submitUTRForVerification()" id="btn-submit-utr" class="btn-glow">Submit</button>
         </div>
       </div>
 
-      <div id="pay-flow-unlocked" style="display:none; text-align:left;">
-        <p style="font-size:11px; color:var(--emerald); font-weight:700; margin-bottom:6px;">✓ Core Engine Licensed & Unlocked</p>
+      <!-- STATE 2: LIVE RADAR VERIFYING ANIMATION -->
+      <div id="step-verifying" style="display:none;">
+        <div class="radar-box">
+          <div class="radar-circle"></div>
+          <div class="radar-circle"></div>
+          <div class="radar-circle"></div>
+          <div class="radar-icon">⚡</div>
+        </div>
+
+        <h4 style="font-size:16px; font-weight:800; margin-bottom:4px; color:#38bdf8;">Verifying Payment with Bank...</h4>
+        <p style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:12px;">
+          Matching UTR <span id="verifying-utr-tag" class="mono text-indigo-300 font-bold"></span> against credit ledger.<br>
+          Admin approval usually takes <strong>1–2 minutes</strong>. Please do not close.
+        </p>
+        <div style="font-size:10px; color:#64748b; border:1px dashed rgba(255,255,255,0.1); padding:8px; border-radius:8px;">
+          Live status: <span class="text-amber-400 font-bold" id="live-db-status">Awaiting Admin Confirmation...</span>
+        </div>
+      </div>
+
+      <!-- STATE 3: SCRIPT UNLOCKED VIEW -->
+      <div id="step-unlocked" style="display:none; text-align:left;">
+        <p style="font-size:11px; color:var(--emerald); font-weight:700; margin-bottom:6px;">✓ Payment Confirmed & Unlocked by Admin!</p>
         <textarea id="code-output" rows="10" readonly class="mono" style="font-size:10px; color:#a5b4fc; margin-bottom:10px;"></textarea>
         <div style="display:flex; justify-content:flex-end; gap:8px;">
           <button onclick="copyPythonCode()" class="btn-secondary">Copy Script</button>
@@ -476,44 +397,86 @@
         </div>
       </div>
       
-      <button onclick="toggleModal('modal-paywall')" class="btn-secondary" style="margin-top:12px; font-size:11px;">Close Window</button>
+      <button onclick="toggleModal('modal-paywall')" class="btn-secondary" style="margin-top:14px; font-size:11px;">Close Window</button>
+    </div>
+  </div>
+
+  <!-- SECRET ADMIN VERIFICATION PANEL MODAL -->
+  <div id="modal-admin" class="modal-overlay">
+    <div class="modal-dialog hyper-glass" style="max-width:560px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#10b981; animation:pulse 1s infinite;"></span>
+          <h3 style="font-size:15px; font-weight:800;">Admin Verification Terminal</h3>
+        </div>
+        <button onclick="toggleModal('modal-admin')" class="btn-secondary">&times;</button>
+      </div>
+
+      <p style="font-size:11px; color:#94a3b8; margin-bottom:12px;">
+        Check your Bank SMS / HDFC Statement. Click <strong>"Approve"</strong> to instantly unlock the user's screen.
+      </p>
+
+      <div style="max-height:280px; overflow-y:auto; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:6px;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>UTR Number</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="admin-table-body">
+            <tr><td colspan="4" style="text-align:center; color:#64748b;">Loading requests...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
-    // System State
-    let currentUser = null;
+    // 1. Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAKQFOtuLihx5TQmwUn0aBzNpLo6dRrJM8",
+      authDomain: "botflow-ff935.firebaseapp.com",
+      projectId: "botflow-ff935",
+      storageBucket: "botflow-ff935.firebasestorage.app",
+      messagingSenderId: "904702708944",
+      appId: "1:904702708944:web:7c4374118b5545190da2d5",
+      measurementId: "G-H3JSEWY9F2"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // App State
     let isKeyUnlocked = false;
     let nodes = [];
     let connections = [];
     let dragType = null;
     let nodeGen = 0;
+    let activeWireSource = null;
+    let activePaymentListener = null;
 
-    // 50+ Template Engine Presets
     const templateCatalog = [
-      { id: "mod_anti_abuse", title: "🛡 Rude Word Auto-Ban Guard", tag: "Security", desc: "Monitors group chats, sends warnings for abusive words, and kicks repeated offenders." },
-      { id: "shop_catalog", title: "🛍 Store Menu with Dynamic Buttons", tag: "E-Commerce", desc: "Catalog browser with product buttons, instant price reveals, and direct WhatsApp/Telegram checkout." },
-      { id: "quiz_dice", title: "🎲 Random Lucky Number & Dice", tag: "Gaming", desc: "Generates provably random numbers, lucky prizes, and dice simulations on inline clicks." },
-      { id: "support_faq", title: "💬 Instant FAQ Multi-Button Bot", tag: "Customer Service", desc: "Interactive button trees that answer common queries without admin intervention." },
-      { id: "gatekeeper_sub", title: "🚪 Force Channel Subscription Gate", tag: "Growth", desc: "Locks bot features until the user joins your sponsor channel." },
-      { id: "feedback_collector", title: "📥 Anonymous Feedback Receiver", tag: "Utility", desc: "Forwards user complaints and suggestions directly to your private admin chat." }
+      { id: "mod_anti_abuse", title: "🛡 Rude Word Auto-Ban Guard", tag: "Security", desc: "Monitors group messages, sends warnings on rude words, and kicks repeat offenders." },
+      { id: "shop_catalog", title: "🛍 Store Menu with Dynamic Buttons", tag: "E-Commerce", desc: "Interactive button catalog with instant prices and direct purchase redirects." },
+      { id: "quiz_dice", title: "🎲 Random Lucky Number & Dice", tag: "Gaming", desc: "Generates tamper-proof random numbers and dice rolls on button clicks." },
+      { id: "support_faq", title: "💬 Instant FAQ Multi-Button Bot", tag: "Support", desc: "Interactive FAQ button trees that solve customer queries automatically." }
     ];
 
-    // Initialize UI
     window.addEventListener('DOMContentLoaded', () => {
       renderTemplateCards();
-      // Check cached unlock state
-      if (localStorage.getItem('botflow_unlocked') === 'true') {
-        isKeyUnlocked = true;
-      }
+      setupLiveWireTracking();
+      if (localStorage.getItem('botflow_unlocked') === 'true') isKeyUnlocked = true;
     });
 
     function renderTemplateCards() {
       const container = document.getElementById('templates-catalog');
       container.innerHTML = templateCatalog.map(t => `
-        <div class="tpl-card glass glass-interactive" onclick="loadTemplate('${t.id}')">
+        <div class="tpl-card hyper-glass" onclick="loadTemplate('${t.id}')">
           <div>
-            <span class="tpl-tag" style="background:rgba(99,102,241,0.15); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3);">${t.tag}</span>
+            <span style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; background:rgba(99,102,241,0.15); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3); text-transform:uppercase;">${t.tag}</span>
             <h4 style="font-size:13px; font-weight:700; margin:8px 0 4px 0;">${t.title}</h4>
             <p style="font-size:11px; color:#94a3b8; line-height:1.4;">${t.desc}</p>
           </div>
@@ -522,7 +485,6 @@
       `).join('');
     }
 
-    // Switch Views
     function switchView(view) {
       document.getElementById('screen-dashboard').classList.toggle('active', view === 'dashboard');
       document.getElementById('screen-studio').classList.toggle('active', view === 'studio');
@@ -531,36 +493,27 @@
     }
 
     function startBlankProject() {
-      nodes = [];
-      connections = [];
+      nodes = []; connections = [];
       document.getElementById('nodes-layer').innerHTML = '';
       drawConnections();
       switchView('studio');
-      
-      // Auto add initial command
       createNode('command', 60, 60);
     }
 
     function loadTemplate(tplId) {
-      nodes = [];
-      connections = [];
+      nodes = []; connections = [];
       document.getElementById('nodes-layer').innerHTML = '';
       switchView('studio');
-
       if (tplId === 'mod_anti_abuse') {
         createNode('mod_guard', 80, 80);
-      } else if (tplId === 'shop_catalog') {
-        const n1 = createNode('command', 60, 60);
-        const n2 = createNode('buttons', 380, 60);
-        linkNodes(n1.id, n2.id);
       } else {
         const n1 = createNode('command', 60, 60);
-        const n2 = createNode('buttons', 380, 60);
+        const n2 = createNode('buttons', 400, 60);
         linkNodes(n1.id, n2.id);
       }
     }
 
-    // Canvas Node Architecture
+    // Node & Wire Wiring
     function handleDrag(e, type) { dragType = type; }
     function handleDrop(e) {
       e.preventDefault();
@@ -575,16 +528,16 @@
 
       if (type === 'command') {
         data.cmd = '/start';
-        data.reply = 'Welcome to our autonomous bot network!';
+        data.reply = 'Namaste! Bot active ho chuka hai.';
       } else if (type === 'buttons') {
-        data.title = 'Explore Options:';
+        data.title = 'Choose an option:';
         data.buttons = [
           { label: '🎲 Lucky Roll', action: 'num', val: '100-999' },
           { label: '🔗 Official Channel', action: 'url', val: 'https://t.me/' }
         ];
       } else if (type === 'mod_guard') {
-        data.badWords = 'fool, scam, rude, abuse';
-        data.action = 'kick'; // warn or kick
+        data.badWords = 'rude, scam, fool, abuse';
+        data.action = 'kick';
       }
 
       nodes.push(data);
@@ -595,13 +548,11 @@
     function renderNodeDOM(data) {
       const el = document.createElement('div');
       el.id = data.id;
-      el.className = 'flow-node glass';
+      el.className = 'flow-node hyper-glass';
       el.style.left = data.x + 'px';
       el.style.top = data.y + 'px';
 
-      // Output & Input Connection Ports
-      const inPort = `<div class="port port-in"></div>`;
-      const outPort = `<div class="port port-out" onclick="beginLink('${data.id}')"></div>`;
+      const inPort = `<div class="port-in-badge" onclick="event.stopPropagation(); connectTargetNode('${data.id}')" title="Connect Here">IN</div>`;
 
       let body = '';
       if (data.type === 'command') {
@@ -613,6 +564,9 @@
           <div class="node-content">
             <input type="text" value="${data.cmd}" placeholder="/start" oninput="updateData('${data.id}','cmd',this.value)">
             <textarea rows="2" placeholder="Welcome message..." oninput="updateData('${data.id}','reply',this.value)">${data.reply}</textarea>
+            <div style="display:flex; justify-content:flex-end;">
+              <button onclick="event.stopPropagation(); startWireConnect('${data.id}', this)" class="btn-secondary" style="font-size:10px; color:#a5b4fc;">⚡ Connect Next</button>
+            </div>
           </div>
         `;
       } else if (data.type === 'buttons') {
@@ -627,6 +581,9 @@
               ${renderButtonsHTML(data.id, data.buttons)}
             </div>
             <button onclick="addInlineButton('${data.id}')" class="btn-secondary" style="font-size:10px;">+ Add Button</button>
+            <div style="display:flex; justify-content:flex-end;">
+              <button onclick="event.stopPropagation(); startWireConnect('${data.id}', this)" class="btn-secondary" style="font-size:10px; color:#a5b4fc;">⚡ Connect Next</button>
+            </div>
           </div>
         `;
       } else if (data.type === 'mod_guard') {
@@ -636,32 +593,36 @@
             <span onclick="deleteNode('${data.id}')" style="cursor:pointer;">&times;</span>
           </div>
           <div class="node-content">
-            <label style="font-size:10px; color:#94a3b8;">Banned Words (Comma separated)</label>
+            <label style="font-size:10px; color:#94a3b8;">Banned Words (comma separated)</label>
             <input type="text" value="${data.badWords}" oninput="updateData('${data.id}','badWords',this.value)">
-            <label style="font-size:10px; color:#94a3b8;">Action on Abuse</label>
+            <label style="font-size:10px; color:#94a3b8;">Action on Rude Word</label>
             <select onchange="updateData('${data.id}','action',this.value)">
-              <option value="kick" ${data.action==='kick'?'selected':''}>Kick from Group</option>
-              <option value="warn" ${data.action==='warn'?'selected':''}>Send Warning Only</option>
+              <option value="kick" ${data.action==='kick'?'selected':''}>Kick Member from Group</option>
+              <option value="warn" ${data.action==='warn'?'selected':''}>Send Public Warning Only</option>
             </select>
           </div>
         `;
       }
 
-      el.innerHTML = inPort + body + outPort;
+      el.innerHTML = inPort + body;
+      el.addEventListener('click', () => {
+        if (activeWireSource && activeWireSource !== data.id) connectTargetNode(data.id);
+      });
+
       document.getElementById('nodes-layer').appendChild(el);
       attachDrag(el, data);
     }
 
     function renderButtonsHTML(nodeId, btns) {
       return btns.map((b, idx) => `
-        <div class="btn-item-row">
-          <input type="text" value="${b.label}" style="width:40%;" oninput="updateBtn('${nodeId}',${idx},'label',this.value)">
-          <select style="width:25%; font-size:10px;" onchange="updateBtn('${nodeId}',${idx},'action',this.value)">
+        <div style="display:flex; gap:4px; align-items:center;">
+          <input type="text" value="${b.label}" style="width:40%; padding:4px 6px;" oninput="updateBtn('${nodeId}',${idx},'label',this.value)">
+          <select style="width:25%; padding:4px 4px; font-size:10px;" onchange="updateBtn('${nodeId}',${idx},'action',this.value)">
             <option value="num" ${b.action==='num'?'selected':''}>Dice</option>
             <option value="url" ${b.action==='url'?'selected':''}>URL</option>
             <option value="txt" ${b.action==='txt'?'selected':''}>Text</option>
           </select>
-          <input type="text" value="${b.val}" style="width:35%;" oninput="updateBtn('${nodeId}',${idx},'val',this.value)">
+          <input type="text" value="${b.val}" style="width:35%; padding:4px 6px;" oninput="updateBtn('${nodeId}',${idx},'val',this.value)">
         </div>
       `).join('');
     }
@@ -678,11 +639,7 @@
       if (n && n.buttons[idx]) n.buttons[idx][key] = val;
     }
 
-    function updateData(id, k, v) {
-      const n = nodes.find(x => x.id === id);
-      if (n) n[k] = v;
-    }
-
+    function updateData(id, k, v) { const n = nodes.find(x => x.id === id); if (n) n[k] = v; }
     function deleteNode(id) {
       nodes = nodes.filter(n => n.id !== id);
       connections = connections.filter(c => c.from !== id && c.to !== id);
@@ -690,7 +647,73 @@
       drawConnections();
     }
 
-    // Node Movement & SVG Connector
+    // Realtime Connections
+    function startWireConnect(fromId) {
+      activeWireSource = fromId;
+      document.getElementById('live-cable').style.display = 'block';
+    }
+
+    function connectTargetNode(toId) {
+      if (activeWireSource && activeWireSource !== toId) {
+        linkNodes(activeWireSource, toId);
+        cancelLiveWire();
+      }
+    }
+
+    function cancelLiveWire() {
+      activeWireSource = null;
+      document.getElementById('live-cable').style.display = 'none';
+    }
+
+    function setupLiveWireTracking() {
+      const workspace = document.getElementById('canvas-workspace');
+      workspace.addEventListener('mousemove', (e) => {
+        if (!activeWireSource) return;
+        const rect = workspace.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const src = nodes.find(n => n.id === activeWireSource);
+        if (!src) return;
+
+        const startX = src.x + 280;
+        const startY = src.y + 110;
+        document.getElementById('live-cable').setAttribute('d', `M ${startX} ${startY} C ${startX+60} ${startY}, ${mouseX-60} ${mouseY}, ${mouseX} ${mouseY}`);
+      });
+      workspace.addEventListener('click', (e) => {
+        if (e.target.id === 'canvas-workspace') cancelLiveWire();
+      });
+    }
+
+    function linkNodes(from, to) {
+      if (!connections.some(c => c.from === from && c.to === to)) {
+        connections.push({ from, to });
+        drawConnections();
+      }
+    }
+
+    function drawConnections() {
+      const svg = document.getElementById('svg-connections');
+      const live = document.getElementById('live-cable');
+      svg.innerHTML = '';
+      svg.appendChild(live);
+
+      connections.forEach(c => {
+        const nFrom = nodes.find(n => n.id === c.from);
+        const nTo = nodes.find(n => n.id === c.to);
+        if (!nFrom || !nTo) return;
+
+        const x1 = nFrom.x + 280, y1 = nFrom.y + 110;
+        const x2 = nTo.x, y2 = nTo.y + 50;
+
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', `M ${x1} ${y1} C ${x1+60} ${y1}, ${x2-60} ${y2}, ${x2} ${y2}`);
+        p.setAttribute('class', 'conn-path');
+        p.onclick = () => { connections = connections.filter(x => x !== c); drawConnections(); };
+        svg.appendChild(p);
+      });
+    }
+
     function attachDrag(el, data) {
       let isDown = false, offX, offY;
       el.addEventListener('mousedown', (e) => {
@@ -708,79 +731,30 @@
         el.style.top = data.y + 'px';
         drawConnections();
       });
-      window.addEventListener('mouseup', () => {
-        if (isDown) {
-          isDown = false;
-          el.style.zIndex = 15;
-        }
-      });
+      window.addEventListener('mouseup', () => { isDown = false; el.style.zIndex = 15; });
     }
 
-    let linkSource = null;
-    function beginLink(fromId) {
-      if (!linkSource) {
-        linkSource = fromId;
-      } else {
-        if (linkSource !== fromId) linkNodes(linkSource, fromId);
-        linkSource = null;
-      }
-    }
-
-    function linkNodes(from, to) {
-      if (!connections.some(c => c.from === from && c.to === to)) {
-        connections.push({ from, to });
-        drawConnections();
-      }
-    }
-
-    function drawConnections() {
-      const svg = document.getElementById('svg-connections');
-      svg.innerHTML = '';
-      connections.forEach(c => {
-        const nFrom = nodes.find(n => n.id === c.from);
-        const nTo = nodes.find(n => n.id === c.to);
-        if (!nFrom || !nTo) return;
-
-        const x1 = nFrom.x + 280;
-        const y1 = nFrom.y + 60;
-        const x2 = nTo.x;
-        const y2 = nTo.y + 60;
-        const cx1 = x1 + 60;
-        const cx2 = x2 - 60;
-
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${y1}, ${cx2} ${y2}, ${x2} ${y2}`);
-        path.setAttribute('class', 'conn-path');
-        svg.appendChild(path);
-      });
-    }
-
-    // Python Compiler Core
+    // Python Compilation Engine
     function generateFullPython() {
       let script = `import telebot, random\nfrom telebot.types import InlineKeyboardMarkup, InlineKeyboardButton\n\nBOT_TOKEN = "YOUR_BOT_TOKEN_HERE"\nbot = telebot.TeleBot(BOT_TOKEN)\n\n`;
 
-      // 1. Commands
       const commands = nodes.filter(n => n.type === 'command');
       commands.forEach(cmd => {
-        const cleanCmd = cmd.cmd.replace('/', '');
-        script += `@bot.message_handler(commands=['${cleanCmd}'])\ndef handle_${cleanCmd}(m):\n    bot.send_message(m.chat.id, "${cmd.reply.replace(/"/g, '\\"')}")\n\n`;
+        const clean = cmd.cmd.replace('/', '');
+        script += `@bot.message_handler(commands=['${clean}'])\ndef h_${clean}(m):\n    bot.send_message(m.chat.id, "${cmd.reply.replace(/"/g, '\\"')}")\n\n`;
       });
 
-      // 2. Multi-Button Grids
       const btnNodes = nodes.filter(n => n.type === 'buttons');
-      btnNodes.forEach((btnGroup, gIdx) => {
-        script += `@bot.message_handler(commands=['menu_${gIdx+1}'])\ndef menu_${gIdx+1}(m):\n    kb = InlineKeyboardMarkup()\n`;
-        btnGroup.buttons.forEach((b, bIdx) => {
-          if (b.action === 'url') {
-            script += `    kb.add(InlineKeyboardButton("${b.label}", url="${b.val}"))\n`;
-          } else {
-            script += `    kb.add(InlineKeyboardButton("${b.label}", callback_data="btn_${gIdx}_${bIdx}"))\n`;
-          }
+      btnNodes.forEach((bg, gIdx) => {
+        script += `@bot.message_handler(commands=['menu_${gIdx+1}'])\ndef m_${gIdx+1}(m):\n    kb = InlineKeyboardMarkup()\n`;
+        bg.buttons.forEach((b, bIdx) => {
+          if (b.action === 'url') kb_code = `url="${b.val}"`;
+          else kb_code = `callback_data="btn_${gIdx}_${bIdx}"`;
+          script += `    kb.add(InlineKeyboardButton("${b.label}", ${kb_code}))\n`;
         });
-        script += `    bot.send_message(m.chat.id, "${btnGroup.title}", reply_markup=kb)\n\n`;
+        script += `    bot.send_message(m.chat.id, "${bg.title}", reply_markup=kb)\n\n`;
       });
 
-      // Button Callback Handler
       if (btnNodes.some(bg => bg.buttons.some(b => b.action !== 'url'))) {
         script += `@bot.callback_query_handler(func=lambda c: True)\ndef on_click(c):\n`;
         btnNodes.forEach((bg, gIdx) => {
@@ -788,7 +762,7 @@
             const cbId = `btn_${gIdx}_${bIdx}`;
             if (b.action === 'num') {
               const [min, max] = b.val.split('-');
-              script += `    if c.data == "${cbId}":\n        bot.send_message(c.message.chat.id, f"🎲 Lucky Roll: {random.randint(${min||1}, ${max||100})}")\n`;
+              script += `    if c.data == "${cbId}":\n        bot.send_message(c.message.chat.id, f"🎲 Result: {random.randint(${min||1}, ${max||100})}")\n`;
             } else if (b.action === 'txt') {
               script += `    if c.data == "${cbId}":\n        bot.send_message(c.message.chat.id, "${b.val}")\n`;
             }
@@ -797,15 +771,14 @@
         script += `\n`;
       }
 
-      // 3. Rude Word Moderation Guard
       const mod = nodes.find(n => n.type === 'mod_guard');
       if (mod) {
-        const wordsArray = mod.badWords.split(',').map(w => w.trim().toLowerCase());
-        script += `# Rude Word Auto-Guard Filter\nBANNED_WORDS = ${JSON.stringify(wordsArray)}\n\n@bot.message_handler(func=lambda m: True)\ndef filter_abuse(m):\n    text = (m.text or "").lower()\n    if any(bad in text for bad in BANNED_WORDS):\n`;
+        const words = mod.badWords.split(',').map(w => w.trim().toLowerCase());
+        script += `# Rude Language Filter\nBANNED = ${JSON.stringify(words)}\n\n@bot.message_handler(func=lambda m: True)\ndef filter_msg(m):\n    text = (m.text or "").lower()\n    if any(w in text for w in BANNED):\n`;
         if (mod.action === 'kick') {
-          script += `        try:\n            bot.kick_chat_member(m.chat.id, m.from_user.id)\n            bot.send_message(m.chat.id, f"⚠️ User {m.from_user.first_name} was kicked for rude language.")\n        except Exception as e:\n            bot.send_message(m.chat.id, f"Notice: Please provide Admin privileges to kick members.")\n`;
+          script += `        try:\n            bot.kick_chat_member(m.chat.id, m.from_user.id)\n            bot.send_message(m.chat.id, f"⚠️ User {m.from_user.first_name} was kicked for rude language.")\n        except Exception:\n            bot.send_message(m.chat.id, "Notice: Give Admin rights to kick members.")\n`;
         } else {
-          script += `        bot.reply_to(m, "⚠️ Warning: Abusive/rude language is not permitted here.")\n`;
+          script += `        bot.reply_to(m, "⚠️ Warning: Rude words are not permitted.")\n`;
         }
       }
 
@@ -813,40 +786,149 @@
       return script;
     }
 
-    // Modal & Paywall Handlers
-    function toggleModal(id) {
-      document.getElementById(id).classList.toggle('open');
-    }
+    function toggleModal(id) { document.getElementById(id).classList.toggle('open'); }
 
     function openCompilerModal() {
       const code = generateFullPython();
       document.getElementById('code-output').value = code;
 
       if (isKeyUnlocked) {
-        document.getElementById('pay-flow-initial').style.display = 'none';
-        document.getElementById('pay-flow-unlocked').style.display = 'block';
+        document.getElementById('step-pay-form').style.display = 'none';
+        document.getElementById('step-verifying').style.display = 'none';
+        document.getElementById('step-unlocked').style.display = 'block';
       } else {
-        document.getElementById('pay-flow-initial').style.display = 'block';
-        document.getElementById('pay-flow-unlocked').style.display = 'none';
+        document.getElementById('step-pay-form').style.display = 'block';
+        document.getElementById('step-verifying').style.display = 'none';
+        document.getElementById('step-unlocked').style.display = 'none';
       }
       toggleModal('modal-paywall');
     }
 
-    function verifyPaymentState() {
-      const utr = document.getElementById('pay-utr').value.trim();
-      if (utr.length === 12 && /^\d+$/.test(utr)) {
-        isKeyUnlocked = true;
-        localStorage.setItem('botflow_unlocked', 'true');
-        document.getElementById('pay-flow-initial').style.display = 'none';
-        document.getElementById('pay-flow-unlocked').style.display = 'block';
-      } else {
-        alert('Please enter a valid 12-digit numeric Bank UTR / Reference number.');
+    // 2. Realtime UTR Verification & Firebase Listener
+    async function submitUTRForVerification() {
+      const utr = document.getElementById('user-utr-input').value.trim();
+      if (utr.length !== 12 || !/^\d+$/.test(utr)) {
+        return alert("Kripya valid 12-digit numeric UPI UTR / Reference number enter karein.");
+      }
+
+      const btn = document.getElementById('btn-submit-utr');
+      btn.innerText = "Submitting...";
+      btn.disabled = true;
+
+      try {
+        // Automatically save UTR, time, amount & status to Firestore
+        await db.collection("payment_requests").doc(utr).set({
+          utr: utr,
+          amount: 9,
+          payee: "Sangita Devi",
+          user: "Aditya Raj",
+          status: "pending",
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          clientTime: new Date().toLocaleTimeString()
+        });
+
+        // Switch User View to Radar Animation
+        document.getElementById('step-pay-form').style.display = 'none';
+        document.getElementById('step-verifying').style.display = 'block';
+        document.getElementById('verifying-utr-tag').innerText = utr;
+
+        // Start Live Realtime Listener on this document
+        if (activePaymentListener) activePaymentListener();
+        activePaymentListener = db.collection("payment_requests").doc(utr)
+          .onSnapshot((docSnapshot) => {
+            if (docSnapshot.exists) {
+              const data = docSnapshot.data();
+              if (data.status === "approved") {
+                isKeyUnlocked = true;
+                localStorage.setItem('botflow_unlocked', 'true');
+                // Switch to Unlocked Script view
+                document.getElementById('step-verifying').style.display = 'none';
+                document.getElementById('step-unlocked').style.display = 'block';
+              } else if (data.status === "rejected") {
+                alert("Payment Verification Failed: Admin could not verify this UTR in bank credit logs.");
+                document.getElementById('step-verifying').style.display = 'none';
+                document.getElementById('step-pay-form').style.display = 'block';
+              }
+            }
+          });
+
+      } catch (err) {
+        alert("Firestore Error: " + err.message);
+      } finally {
+        btn.innerText = "Submit";
+        btn.disabled = false;
+      }
+    }
+
+    // 3. Secret Admin Panel Flow (Triple-click logo)
+    let logoClicks = 0;
+    function registerLogoClick() {
+      logoClicks++;
+      if (logoClicks >= 3) {
+        logoClicks = 0;
+        openAdminPanel();
+      }
+      setTimeout(() => { logoClicks = 0; }, 1500);
+    }
+
+    function openAdminPanel() {
+      toggleModal('modal-admin');
+      loadAdminPayments();
+    }
+
+    function loadAdminPayments() {
+      const tbody = document.getElementById('admin-table-body');
+      
+      // Live listen to all recent payment requests
+      db.collection("payment_requests")
+        .orderBy("timestamp", "desc")
+        .limit(15)
+        .onSnapshot((snap) => {
+          if (snap.empty) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b;">No pending requests yet.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = snap.docs.map(doc => {
+            const p = doc.data();
+            const timeStr = p.clientTime || 'Just now';
+            const isPending = p.status === 'pending';
+            
+            return `
+              <tr>
+                <td style="color:#94a3b8;">${timeStr}</td>
+                <td class="mono font-bold text-indigo-300">${p.utr}</td>
+                <td>
+                  <span style="padding:2px 6px; border-radius:4px; font-size:9px; font-weight:700; background:${p.status==='approved'?'rgba(16,185,129,0.2)':'rgba(245,158,11,0.2)'}; color:${p.status==='approved'?'#34d399':'#fbbf24'};">
+                    ${p.status.toUpperCase()}
+                  </span>
+                </td>
+                <td>
+                  ${isPending ? `
+                    <button onclick="adminSetStatus('${p.utr}', 'approved')" style="padding:4px 8px; font-size:10px; background:#10b981; color:#fff; border-radius:6px; border:none; cursor:pointer; font-weight:700;">Approve</button>
+                    <button onclick="adminSetStatus('${p.utr}', 'rejected')" style="padding:4px 8px; font-size:10px; background:#ef4444; color:#fff; border-radius:6px; border:none; cursor:pointer; margin-left:4px;">Reject</button>
+                  ` : `<span style="color:#64748b; font-size:10px;">Processed</span>`}
+                </td>
+              </tr>
+            `;
+          }).join('');
+        });
+    }
+
+    async function adminSetStatus(utr, newStatus) {
+      try {
+        await db.collection("payment_requests").doc(utr).update({
+          status: newStatus,
+          verifiedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (err) {
+        alert("Admin update failed: " + err.message);
       }
     }
 
     function copyPythonCode() {
       navigator.clipboard.writeText(document.getElementById('code-output').value);
-      alert('Python code copied to clipboard!');
+      alert('Python script copied to clipboard!');
     }
 
     function downloadPythonScript() {
@@ -855,19 +937,6 @@
       a.href = URL.createObjectURL(blob);
       a.download = 'bot.py';
       a.click();
-    }
-
-    // Simple Authentication Mock
-    function performAuth() {
-      const em = document.getElementById('auth-email-in').value.trim();
-      if (em) {
-        currentUser = em;
-        document.getElementById('btn-login-trig').style.display = 'none';
-        const tag = document.getElementById('user-status-tag');
-        tag.textContent = em.split('@')[0];
-        tag.style.display = 'inline-block';
-        toggleModal('modal-auth');
-      }
     }
   </script>
 </body>
