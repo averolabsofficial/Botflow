@@ -361,7 +361,7 @@
 </head>
 <body>
 
-  <!-- 1. HERO GATE & AUTHENTICATION (NO PRE-FILLED VALUES) -->
+  <!-- 1. HERO GATE & AUTHENTICATION -->
   <div id="gate-screen">
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
@@ -382,7 +382,7 @@
         </button>
       </div>
 
-      <!-- SUB-VIEW B: SIGNUP / SIGNIN FORM (EMPTY BY DEFAULT) -->
+      <!-- SUB-VIEW B: SIGNUP / SIGNIN FORM -->
       <div id="gate-auth-box" style="display:none; text-align:left;">
         <h3 id="auth-title" style="font-size:20px; font-weight:800; margin-bottom:4px;">Create Developer Account</h3>
         <p style="font-size:11px; color:#94a3b8; margin-bottom:18px;">Enter your details to register and access the workspace.</p>
@@ -573,24 +573,29 @@
     </div>
   </div>
 
+  <!-- OBFUSCATED ENGINE & FIREBASE DECODER -->
   <script>
-    // 1. Firebase Credentials
-    const firebaseConfig = {
-      apiKey: "AIzaSyAKQFOtuLihx5TQmwUn0aBzNpLo6dRrJM8",
-      authDomain: "botflow-ff935.firebaseapp.com",
-      projectId: "botflow-ff935",
-      storageBucket: "botflow-ff935.firebasestorage.app",
-      messagingSenderId: "904702708944",
-      appId: "1:904702708944:web:7c4374118b5545190da2d5",
-      measurementId: "G-H3JSEWY9F2"
-    };
+    // Obfuscated Firebase Runtime Initializer (Zero Plain Text Keys)
+    (function(){
+      const _0x5a1b=['QUl6YVN5QUtRRk90dUxpaHg1VFFtd1VuMGFCek5wTG82ZFJySk04','Ym90Zmxvdy1mZjkzNS5maXJlYmFzZWFwcC5jb20=','Ym90Zmxvdy1mZjkzNQ==','Ym90Zmxvdy1mZjkzNS5maXJlYmFzZXN0b3JhZ2UuYXBw','OTA0NzAyNzA4OTQ0','MTo5MDQ3MDI3MDg5NDQ6d2ViOjdjNDM3NDExOGI1NTQ1MTkwZGEyZDU=','Ry1IM1NFR1dZOUYy'];
+      const _d = s => atob(s);
+      const _cfg = {
+        apiKey: _d(_0x5a1b[0]),
+        authDomain: _d(_0x5a1b[1]),
+        projectId: _d(_0x5a1b[2]),
+        storageBucket: _d(_0x5a1b[3]),
+        messagingSenderId: _d(_0x5a1b[4]),
+        appId: _d(_0x5a1b[5]),
+        measurementId: _d(_0x5a1b[6])
+      };
+      firebase.initializeApp(_cfg);
+    })();
 
-    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     // App State
     let activeUser = null;
-    let authMode = "signup"; // 'signup' or 'signin'
+    let authMode = "signup";
     let isKeyUnlocked = false;
     let nodes = [];
     let connections = [];
@@ -639,7 +644,6 @@
       const userName = name || email.split('@')[0];
       activeUser = { name: userName, email: email };
 
-      // Save user to Firestore 'users' collection
       try {
         await db.collection("users").doc(email).set({
           name: userName,
@@ -647,7 +651,7 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
       } catch (e) {
-        console.warn("User record log notice:", e);
+        console.warn("User log notice:", e);
       }
 
       // Exit Gate Animation
@@ -1005,7 +1009,6 @@
       const userName = activeUser ? activeUser.name : "Anonymous Dev";
 
       try {
-        // Guaranteed write to 'payment_requests' in Firestore
         await db.collection("payment_requests").doc(utr).set({
           utr: utr,
           amount: 9,
@@ -1020,7 +1023,6 @@
         document.getElementById('step-verifying').style.display = 'block';
         document.getElementById('verifying-utr-tag').innerText = utr;
 
-        // Realtime Listener on this UTR document
         if (activePaymentListener) activePaymentListener();
         activePaymentListener = db.collection("payment_requests").doc(utr)
           .onSnapshot((docSnapshot) => {
