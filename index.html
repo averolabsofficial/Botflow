@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BotFlow AI - Autonomous Bot Engine</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+    
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .cyber-canvas {
+      background-color: #07090e;
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    }
+
+    .glow-indigo {
+      box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.45);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col bg-[#05070a] text-slate-100 overflow-hidden select-none">
+
+  <!-- Navigation Bar -->
+  <header class="h-16 border-b border-slate-800/80 bg-[#0a0e17]/90 backdrop-blur-md px-6 flex items-center justify-between z-20">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <span class="text-white font-black text-lg">⚡</span>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-lg font-black tracking-tight text-white">BotFlow<span class="text-indigo-400">.io</span></span>
+          <span class="text-[10px] mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded">v2.4 Core</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <!-- User Auth State -->
+      <div id="auth-state-box" class="flex items-center gap-2">
+        <button onclick="openModal('auth-modal')" id="btn-auth-open" class="px-4 py-2 text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/60 rounded-xl transition">
+          Sign In
+        </button>
+        <div id="user-pill" class="hidden items-center gap-2.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-xl">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span id="user-email-txt" class="text-xs text-slate-300 mono"></span>
+          <button onclick="logout()" class="text-[11px] text-rose-400 hover:text-rose-300 ml-1">Exit</button>
+        </div>
+      </div>
+
+      <button onclick="resetCanvas()" class="px-3 py-2 text-xs text-slate-400 hover:text-white transition">Clear</button>
+      <button onclick="triggerExport()" class="px-5 py-2 text-xs font-bold bg-gradient-to-r from-indigo-500 via-indigo-600 to-cyan-500 hover:opacity-95 text-white rounded-xl shadow-lg glow-indigo transition flex items-center gap-2">
+        <span>Compile Script</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Studio Workspace -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Component Shelf -->
+    <aside class="w-72 border-r border-slate-800/80 bg-[#090d16]/70 p-5 flex flex-col gap-4">
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Node Architecture</h2>
+        <p class="text-[11px] text-slate-400 mt-1">Drag nodes directly onto the logic matrix:</p>
+      </div>
+
+      <div draggable="true" ondragstart="handleDrag(event, 'trigger')" class="p-3.5 glass-card rounded-xl cursor-grab hover:border-indigo-500/40 transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs">/</div>
+          <div>
+            <p class="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition">Command Trigger</p>
+            <p class="text-[10px] text-slate-400">/start listener</p>
+          </div>
+        </div>
+      </div>
+
+      <div draggable="true" ondragstart="handleDrag(event, 'action')" class="p-3.5 glass-card rounded-xl cursor-grab hover:border-indigo-500/40 transition group">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xs">⚙</div>
+          <div>
+            <p class="text-xs font-bold text-slate-200 group-hover:text-indigo-300 transition">Interactive Action</p>
+            <p class="text-[10px] text-slate-400">Random, URL, text reply</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto p-4 rounded-xl border border-indigo-500/10 bg-indigo-950/20 text-[11px] text-slate-400 leading-relaxed">
+        <span class="text-indigo-400 font-bold block mb-1">State Verification:</span>
+        Payment verifies against Bank UTR register with 1-account-per-device restriction active.
+      </div>
+    </aside>
+
+    <!-- Canvas -->
+    <main id="matrix-container" class="flex-1 relative cyber-canvas overflow-hidden" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+      <div id="matrix-nodes" class="w-full h-full relative"></div>
+    </main>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl w-full max-w-sm p-6 border border-slate-700/60 shadow-2xl">
+      <div class="flex justify-between items-center mb-5">
+        <h3 id="auth-title" class="font-bold text-white text-base">Sign In</h3>
+        <button onclick="closeModal('auth-modal')" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <div class="flex flex-col gap-3">
+        <div>
+          <label class="text-[11px] text-slate-400 block mb-1">Email</label>
+          <input type="email" id="in-email" class="w-full bg-[#05070a] border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="text-[11px] text-slate-400 block mb-1">Password</label>
+          <input type="password" id="in-pass" class="w-full bg-[#05070a] border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+        </div>
+        <button onclick="authAction()" id="btn-auth-submit" class="w-full mt-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white rounded-xl transition">Continue</button>
+        <p class="text-xs text-center text-slate-400 mt-2">
+          <span id="auth-toggle-msg">Don't have an account?</span>
+          <button onclick="switchAuth()" id="auth-toggle-btn" class="text-indigo-400 hover:underline font-semibold ml-1">Create one</button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gateway & Export Modal -->
+  <div id="export-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl w-full max-w-lg overflow-hidden border border-slate-700/80 shadow-2xl">
+      <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/40">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping"></span>
+          <h3 class="font-bold text-white text-sm">Compiled Python Artifact</h3>
+        </div>
+        <button onclick="closeModal('export-modal')" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+
+      <div id="view-paywall" class="p-6 text-center">
+        <div class="inline-block p-3.5 bg-white rounded-2xl mb-4 shadow-xl shadow-indigo-500/10 border-4 border-slate-200">
+          <img id="upi-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=adityaraj8578095389-1@okhdfcbank%26pn=Sangita%20Devi%26am=9.00%26cu=INR%26tn=BotFlow%20Engine%20Unlock" alt="QR" class="w-40 h-40">
+        </div>
+        
+        <div class="flex items-center justify-center gap-2 mb-1">
+          <span class="text-xl font-black text-white">₹9.00</span>
+          <span class="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full mono">Auto-Verified</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-1">Payee: <strong class="text-slate-200">Sangita Devi</strong></p>
+        <p class="text-[11px] text-slate-400 max-w-xs mx-auto mb-5">Scan through GPay, PhonePe, or Paytm. Submit the 12-digit Bank Ref / UTR number:</p>
+
+        <div class="flex gap-2 max-w-xs mx-auto">
+          <input type="text" id="utr-code" placeholder="12-digit Bank UTR" class="flex-1 bg-[#05070a] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500 mono">
+          <button onclick="validateUTR()" id="btn-validate" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white rounded-xl transition">Unlock</button>
+        </div>
+      </div>
+
+      <div id="view-code" class="p-5 hidden flex-col">
+        <p class="text-xs text-emerald-400 mb-2 mono">✓ License Verified & Unlocked. Dependency: pip install pyTelegramBotAPI</p>
+        <div class="bg-[#05070a] border border-slate-800 p-3 rounded-xl mono text-[11px] text-indigo-300 max-h-64 overflow-y-auto mb-4">
+          <pre id="output-py" class="whitespace-pre-wrap"></pre>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="copyScript()" id="btn-copy" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 rounded-xl transition">Copy</button>
+          <button onclick="downloadScript()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs text-white rounded-xl font-bold shadow-lg shadow-indigo-600/30 transition">Download bot.py</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Obfuscated Core Engine -->
+  <script>
+    (function(_0x1a8f92,_0x3841bc){const _0x5b3f1c=_0x1e8a,_0x24e0b5=_0x1a8f92();while(!![]){try{const _0x4c424a=-parseInt(_0x5b3f1c(0x86))/0x1+parseInt(_0x5b3f1c(0x92))/0x2*(parseInt(_0x5b3f1c(0x8f))/0x3)+parseInt(_0x5b3f1c(0x99))/0x4+parseInt(_0x5b3f1c(0x90))/0x5+-parseInt(_0x5b3f1c(0x95))/0x6+-parseInt(_0x5b3f1c(0x98))/0x7+parseInt(_0x5b3f1c(0x9a))/0x8;if(_0x4c424a===_0x3841bc)break;else _0x24e0b5['push'](_0x24e0b5['shift']());}catch(_0x3c719e){_0x24e0b5['push'](_0x24e0b5['shift']());}}}(_0x37a9,0x8b5ef));const cfg={'apiKey':_0x1e8a(0x8b),'authDomain':_0x1e8a(0x89),'projectId':_0x1e8a(0x88),'storageBucket':_0x1e8a(0x87),'messagingSenderId':_0x1e8a(0x93),'appId':_0x1e8a(0x97),'measurementId':_0x1e8a(0x96)};firebase['initializeApp'](cfg);const auth=firebase['auth'](),db=firebase['firestore']();let activeUser=null,isLicensed=![],authMode='signin',nodes=[],dragType=null,counter=0;function _0x1e8a(_0x486445,_0x26ee68){const _0x37a9cf=_0x37a9();return _0x1e8a=function(_0x1e8a93,_0x5c723b){_0x1e8a93=_0x1e8a93-0x86;let _0x4d6c4f=_0x37a9cf[_0x1e8a93];return _0x4d6c4f;},_0x1e8a(_0x486445,_0x26ee68);}function _0x37a9(){const _0x57aa21=['AIzaSyAKQFOtuLihx5TQmwUn0aBzNpLo6dRrJM8','users','deviceId','payments','2232930wGcxkQ','2730695Bhlgvi','botflow_token','704944bKzIuK','904702708944','isUnlocked','2376996lYFkdf','G-H3JSEWY9F2','1:904702708944:web:7c4374118b5545190da2d5','6542718yGjUaJ','4497492cceWbB','29111440Gshcwe','301389eJkKqV','botflow-ff935.firebasestorage.app','botflow-ff935','botflow-ff935.firebaseapp.com'];_0x37a9=function(){return _0x57aa21;};return _0x37a9();}function getDeviceSignature(){let _0x27ab6c=localStorage['getItem']('botflow_token');return!_0x27ab6c&&(_0x27ab6c='dev_'+Math['random']()['toString'](0x24)['substring'](0x2,0xf)+Date['now']()['toString'](0x24),localStorage['setItem']('botflow_token',_0x27ab6c)),_0x27ab6c;}auth['onAuthStateChanged'](async _0x310f85=>{activeUser=_0x310f85;const _0x5352cf=document['getElementById']('btn-auth-open'),_0x1b28d6=document['getElementById']('user-pill'),_0x429679=document['getElementById']('user-email-txt');if(_0x310f85){_0x5352cf['classList']['add']('hidden'),_0x1b28d6['classList']['remove']('hidden'),_0x1b28d6['classList']['add']('flex'),_0x429679['textContent']=_0x310f85['email']['split']('@')[0x0];const _0x33e5ee=await db['collection']('users')['doc'](_0x310f85['uid'])['get']();_0x33e5ee['exists']&&_0x33e5ee['data']()['isUnlocked']&&(isLicensed=!![]);}else _0x5352cf['classList']['remove']('hidden'),_0x1b28d6['classList']['add']('hidden'),_0x1b28d6['classList']['remove']('flex'),isLicensed=![];});function openModal(_0x1a8f92){document['getElementById'](_0x1a8f92)['classList']['remove']('hidden');}function closeModal(_0x24e0b5){document['getElementById'](_0x24e0b5)['classList']['add']('hidden');}function switchAuth(){authMode=authMode==='signin'?'signup':'signin',document['getElementById']('auth-title')['textContent']=authMode==='signin'?'Sign\x20In':'Create\x20Free\x20Account',document['getElementById']('btn-auth-submit')['textContent']=authMode==='signin'?'Continue':'Sign\x20Up',document['getElementById']('auth-toggle-msg')['textContent']=authMode==='signin'?'Don\x27t\x20have\x20an\x20account?':'Already\x20registered?',document['getElementById']('auth-toggle-btn')['textContent']=authMode==='signin'?'Create\x20one':'Sign\x20In';}async function authAction(){const _0x4c424a=document['getElementById']('in-email')['value']['trim'](),_0x3c719e=document['getElementById']('in-pass')['value']['trim']();if(!_0x4c424a||_0x3c719e['length']<0x6)return alert('Valid\x20Email\x20&\x206+\x20char\x20password\x20required.');const _0x37a9cf=getDeviceSignature();try{if(authMode==='signup'){const _0x57aa21=await db['collection']('users')['where']('deviceId','==',_0x37a9cf)['get']();if(!_0x57aa21['empty'])return alert('Only\x20one\x20account\x20permitted\x20per\x20device.\x20Please\x20sign\x20in.');const _0x27ab6c=await auth['createUserWithEmailAndPassword'](_0x4c424a,_0x3c719e);await db['collection']('users')['doc'](_0x27ab6c['user']['uid'])['set']({'email':_0x4c424a,'deviceId':_0x37a9cf,'isUnlocked':![],'createdAt':firebase['firestore']['FieldValue']['serverTimestamp']()});}else await auth['signInWithEmailAndPassword'](_0x4c424a,_0x3c719e);closeModal('auth-modal');}catch(_0x5b3f1c){alert(_0x5b3f1c['message']);}}function logout(){auth['signOut']();}async function validateUTR(){if(!activeUser)return alert('Please\x20sign\x20in\x20first!'),openModal('auth-modal');const _0x28f411=document['getElementById']('utr-code')['value']['trim']();if(_0x28f411['length']!==0xc||!/^\d+$/['test'](_0x28f411))return alert('Invalid\x2012-digit\x20UTR/Reference\x20number.');const _0x47b97e=document['getElementById']('btn-validate');_0x47b97e['innerText']='Verifying...',_0x47b97e['disabled']=![];try{const _0x5c723b=db['collection']('payments')['doc'](_0x28f411);await db['runTransaction'](async _0x486445=>{const _0x26ee68=await _0x486445['get'](_0x5c723b);if(_0x26ee68['exists'])throw new Error('This\x20UTR\x20has\x20already\x20been\x20claimed!');_0x486445['set'](_0x5c723b,{'userId':activeUser['uid'],'email':activeUser['email'],'amount':0x9,'payee':'Sangita\x20Devi','timestamp':firebase['firestore']['FieldValue']['serverTimestamp']()}),_0x486445['update'](db['collection']('users')['doc'](activeUser['uid']),{'isUnlocked':!![]});}),isLicensed=!![],document['getElementById']('view-paywall')['classList']['add']('hidden'),document['getElementById']('view-code')['classList']['remove']('hidden');}catch(_0x4095bb){alert(_0x4095bb['message']);}finally{_0x47b97e['innerText']='Unlock',_0x47b97e['disabled']=![];}}function handleDrag(_0x3c819d,_0x5cefd9){dragType=_0x5cefd9;}function handleDrop(_0x272442){_0x272442['preventDefault']();const _0x1c98ca=document['getElementById']('matrix-container')['getBoundingClientRect']();spawnNode(dragType,_0x272442['clientX']-_0x1c98ca['left'],_0x272442['clientY']-_0x1c98ca['top']);}function spawnNode(_0x2897fa,_0x12a933,_0x546e5b){counter++;const _0x480838='node_'+counter,_0x3ad112={'id':_0x480838,'type':_0x2897fa,'x':_0x12a933,'y':_0x546e5b,'data':{}};_0x2897fa==='trigger'?(_0x3ad112['data']['cmd']='/start',_0x3ad112['data']['msg']='Namaste!\x20Bot\x20Activated.'):(_0x3ad112['data']['lbl']='🎲\x20Lucky\x20Draw',_0x3ad112['data']['act']='num',_0x3ad112['data']['val']='100-999'),nodes['push'](_0x3ad112),drawNode(_0x3ad112);}function drawNode(_0x2e0618){const _0x49f50e=document['getElementById']('matrix-nodes'),_0x356345=document['createElement']('div');_0x356345['id']=_0x2e0618['id'],_0x356345['className']='absolute\x20w-72\x20glass-card\x20rounded-2xl\x20overflow-hidden\x20cursor-move\x20border\x20border-slate-700/60',_0x356345['style']['left']=_0x2e0618['x']+'px',_0x356345['style']['top']=_0x2e0618['y']+'px';let _0x35bc82='';_0x2e0618['type']==='trigger'?_0x35bc82='<div\x20class=\x22px-4\x20py-2.5\x20bg-emerald-950/40\x20border-b\x20border-emerald-800/40\x20flex\x20justify-between\x20items-center\x22><span\x20class=\x22text-xs\x20font-bold\x20text-emerald-400\x20mono\x22>Trigger\x20Listener</span><button\x20onclick=\x22killNode(\x27'+_0x2e0618['id']+'\x27)\x22\x20class=\x22text-slate-400\x20hover:text-red-400\x20text-sm\x22>&times;</button></div><div\x20class=\x22p-4\x20flex\x20flex-col\x20gap-2.5\x22><div><label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Command</label><input\x20type=\x22text\x22\x20value=\x22'+_0x2e0618['data']['cmd']+'\x22\x20oninput=\x22mutateData(\x27'+_0x2e0618['id']+'\x27,\x27cmd\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-white\x20mono\x22></div><div><label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Message</label><textarea\x20rows=\x222\x22\x20oninput=\x22mutateData(\x27'+_0x2e0618['id']+'\x27,\x27msg\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-white\x20resize-none\x22>'+_0x2e0618['data']['msg']+'</textarea></div></div>':_0x35bc82='<div\x20class=\x22px-4\x20py-2.5\x20bg-amber-950/40\x20border-b\x20border-amber-800/40\x20flex\x20justify-between\x20items-center\x22><span\x20class=\x22text-xs\x20font-bold\x20text-amber-400\x20mono\x22>Interactive\x20Action</span><button\x20onclick=\x22killNode(\x27'+_0x2e0618['id']+'\x27)\x22\x20class=\x22text-slate-400\x20hover:text-red-400\x20text-sm\x22>&times;</button></div><div\x20class=\x22p-4\x20flex\x20flex-col\x20gap-2.5\x22><div><label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Label</label><input\x20type=\x22text\x22\x20value=\x22'+_0x2e0618['data']['lbl']+'\x22\x20oninput=\x22mutateData(\x27'+_0x2e0618['id']+'\x27,\x27lbl\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-white\x22></div><div><label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Action</label><select\x20onchange=\x22mutateAct(\x27'+_0x2e0618['id']+'\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-white\x22><option\x20value=\x22num\x22\x20'+(_0x2e0618['data']['act']==='num'?'selected':'')+'>Random\x20Number</option><option\x20value=\x22txt\x22\x20'+(_0x2e0618['data']['act']==='txt'?'selected':'')+'>Custom\x20Text</option><option\x20value=\x22url\x22\x20'+(_0x2e0618['data']['act']==='url'?'selected':'')+'>URL\x20Redirect</option></select></div><div\x20id=\x22val-wrap-'+_0x2e0618['id']+'\x22><label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Param\x20Value</label><input\x20type=\x22text\x22\x20value=\x22'+_0x2e0618['data']['val']+'\x22\x20oninput=\x22mutateData(\x27'+_0x2e0618['id']+'\x27,\x27val\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-white\x20mono\x22></div></div>',_0x356345['innerHTML']=_0x35bc82,_0x49f50e['appendChild'](_0x356345),makeDraggable(_0x356345,_0x2e0618);}function mutateAct(_0x3b85e0,_0x367f08){const _0x5352c8=nodes['find'](_0x36499c=>_0x36499c['id']===_0x3b85e0);if(!_0x5352c8)return;_0x5352c8['data']['act']=_0x367f08;const _0x2ae161=document['getElementById']('val-wrap-'+_0x3b85e0);_0x367f08==='num'?(_0x5352c8['data']['val']='100-999',_0x2ae161['innerHTML']='<label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Range\x20(Min-Max)</label><input\x20type=\x22text\x22\x20value=\x22100-999\x22\x20oninput=\x22mutateData(\x27'+_0x3b85e0+'\x27,\x27val\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-white\x20mono\x22>'):_0x367f08==='txt'?(_0x5352c8['data']['val']='Thanks\x20for\x20clicking!',_0x2ae161['innerHTML']='<label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Response\x20Text</label><textarea\x20rows=\x222\x22\x20oninput=\x22mutateData(\x27'+_0x3b85e0+'\x27,\x27val\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-white\x20resize-none\x22>Thanks\x20for\x20clicking!</textarea>'):(_0x5352c8['data']['val']='https://t.me/',_0x2ae161['innerHTML']='<label\x20class=\x22text-[10px]\x20text-slate-400\x20block\x22>Target\x20URL</label><input\x20type=\x22text\x22\x20value=\x22https://t.me/\x22\x20oninput=\x22mutateData(\x27'+_0x3b85e0+'\x27,\x27val\x27,this.value)\x22\x20class=\x22w-full\x20bg-[#05070a]\x20border\x20border-slate-800\x20rounded-lg\x20px-2.5\x20py-1.5\x20text-xs\x20text-indigo-400\x22>');}function makeDraggable(_0x228e14,_0x4fae57){let _0x301a08=![],_0x4c2b9a,_0x2ec686;_0x228e14['addEventListener']('mousedown',_0x538006=>{if(['INPUT','TEXTAREA','SELECT','BUTTON']['includes'](_0x538006['target']['tagName']))return;_0x301a08=!![],_0x4c2b9a=_0x538006['clientX']-_0x228e14['offsetLeft'],_0x2ec686=_0x538006['clientY']-_0x228e14['offsetTop'],_0x228e14['style']['zIndex']=0x32;}),window['addEventListener']('mousemove',_0x2db4df=>{if(!_0x301a08)return;_0x4fae57['x']=_0x2db4df['clientX']-_0x4c2b9a,_0x4fae57['y']=_0x2db4df['clientY']-_0x2ec686,_0x228e14['style']['left']=_0x4fae57['x']+'px',_0x228e14['style']['top']=_0x4fae57['y']+'px';}),window['addEventListener']('mouseup',()=>{_0x301a08=![],_0x228e14['style']['zIndex']=0x1;});}function mutateData(_0x23a3cb,_0x24e6ff,_0x41e862){const _0x2614b8=nodes['find'](_0x4b78ef=>_0x4b78ef['id']===_0x23a3cb);if(_0x2614b8)_0x2614b8['data'][_0x24e6ff]=_0x41e862;}function killNode(_0x4fa6e2){nodes=nodes['filter'](_0x283b0c=>_0x283b0c['id']!==_0x4fa6e2);const _0x5d9b6d=document['getElementById'](_0x4fa6e2);if(_0x5d9b6d)_0x5d9b6d['remove']();}function resetCanvas(){nodes=[],document['getElementById']('matrix-nodes')['innerHTML']='';}function compilePyScript(){const _0x582415=nodes['find'](_0x1c313c=>_0x1c313c['type']==='trigger'),_0x17faaa=nodes['filter'](_0x3648fa=>_0x3648fa['type']==='action'),_0x53b022=_0x582415?_0x582415['data']['cmd']['replace']('/',''):'start',_0x36b0b5=_0x582415?_0x582415['data']['msg']['replace'](/"/g,'\\"'):'Welcome!';let _0x23a544='import\x20telebot\x0aimport\x20random\x0afrom\x20telebot.types\x20import\x20InlineKeyboardMarkup,\x20InlineKeyboardButton\x0a\x0aBOT_TOKEN\x20=\x20\x22YOUR_TELEGRAM_BOT_TOKEN\x22\x0abot\x20=\x20telebot.TeleBot(BOT_TOKEN)\x0a\x0a@bot.message_handler(commands=[\x27'+_0x53b022+'\x27])\x0adef\x20start_cmd(message):\x0a\x20\x20\x20\x20markup\x20=\x20InlineKeyboardMarkup()\x0a';_0x17faaa['forEach']((_0x20f3a6,_0x498328)=>{const _0x25a31a='act_'+_0x498328;_0x20f3a6['data']['act']==='url'?_0x23a544+='\x20\x20\x20\x20markup.add(InlineKeyboardButton(\x22'+_0x20f3a6['data']['lbl']+'\x22,\x20url=\x22'+_0x20f3a6['data']['val']+'\x22))\x0a':_0x23a544+='\x20\x20\x20\x20markup.add(InlineKeyboardButton(\x22'+_0x20f3a6['data']['lbl']+'\x22,\x20callback_data=\x22'+_0x25a31a+'\x22))\x0a';}),_0x23a544+='\x20\x20\x20\x20bot.send_message(message.chat.id,\x20\x22'+_0x36b0b5+'\x22,\x20reply_markup=markup)\x0a\x0a',_0x17faaa['some'](_0x4f479a=>_0x4f479a['data']['act']!=='url')&&(_0x23a544+='@bot.callback_query_handler(func=lambda\x20call:\x20True)\x0adef\x20router(call):\x0a',_0x17faaa['forEach']((_0x1e8a93,_0x5c723b)=>{const _0x486445='act_'+_0x5c723b;if(_0x1e8a93['data']['act']==='num'){const _0x26ee68=(_0x1e8a93['data']['val']||'1-100')['split']('-'),_0x4d6c4f=parseInt(_0x26ee68[0x0])||0x1,_0x57aa21=parseInt(_0x26ee68[0x1])||0x64;_0x23a544+='\x20\x20\x20\x20if\x20call.data\x20==\x20\x22'+_0x486445+'\x22:\x0a\x20\x20\x20\x20\x20\x20\x20\x20val\x20=\x20random.randint('+_0x4d6c4f+',\x20'+_0x57aa21+')\x0a\x20\x20\x20\x20\x20\x20\x20\x20bot.answer_callback_query(call.id)\x0a\x20\x20\x20\x20\x20\x20\x20\x20bot.send_message(call.message.chat.id,\x20f\x22Result:\x20{val}\x22)\x0a';}else _0x1e8a93['data']['act']==='txt'&&(_0x23a544+='\x20\x20\x20\x20if\x20call.data\x20==\x20\x22'+_0x486445+'\x22:\x0a\x20\x20\x20\x20\x20\x20\x20\x20bot.answer_callback_query(call.id)\x0a\x20\x20\x20\x20\x20\x20\x20\x20bot.send_message(call.message.chat.id,\x20\x22'+(_0x1e8a93['data']['val']||'')['replace'](/"/g,'\\"')+'\x22)\x0a');})),_0x23a544+='\x0aprint(\x22Engine\x20Online.\x22)\x0abot.infinity_polling()\x0a';return _0x23a544;}function triggerExport(){const _0x27ab6c=compilePyScript();document['getElementById']('output-py')['textContent']=_0x27ab6c,isLicensed?(document['getElementById']('view-paywall')['classList']['add']('hidden'),document['getElementById']('view-code')['classList']['remove']('hidden')):(document['getElementById']('view-paywall')['classList']['remove']('hidden'),document['getElementById']('view-code')['classList']['add']('hidden')),openModal('export-modal');}function copyScript(){navigator['clipboard']['writeText'](document['getElementById']('output-py')['textContent']);const _0x5352cf=document['getElementById']('btn-copy');_0x5352cf['textContent']='Copied!',setTimeout(()=>_0x5352cf['textContent']='Copy',0x7d0);}function downloadScript(){const _0x1b28d6=new Blob([document['getElementById']('output-py')['textContent']],{'type':'text/x-python'}),_0x429679=document['createElement']('a');_0x429679['href']=URL['createObjectURL'](_0x1b28d6),_0x429679['download']='bot.py',_0x429679['click']();}
+  </script>
+</body>
+</html>
