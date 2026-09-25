@@ -131,10 +131,10 @@
       justify-content: center;
     }
 
-    /* Views */
-    .view-container { flex: 1; position: relative; overflow: hidden; }
-    .screen { position: absolute; inset: 0; display: none; }
-    .screen.active { display: flex; }
+    /* View Container & Strict Display Handlers */
+    .view-container { flex: 1; position: relative; overflow: hidden; height: calc(100vh - 56px); }
+    .screen { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+    .screen.active { display: flex !important; }
 
     /* Dashboard */
     #screen-dashboard {
@@ -197,20 +197,27 @@
       box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
     }
 
-    /* Studio / Canvas */
-    #screen-studio { display: none; height: 100%; position: relative; }
+    /* Studio / Canvas Layout */
+    #screen-studio {
+      display: none;
+      width: 100%;
+      height: 100%;
+      flex-direction: row;
+    }
     .studio-sidebar {
-      width: 250px;
-      background: rgba(10, 14, 26, 0.85);
+      width: 260px;
+      background: rgba(10, 14, 26, 0.95);
       border-right: 1px solid rgba(255, 255, 255, 0.08);
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
       z-index: 10;
+      flex-shrink: 0;
     }
     .canvas-viewport {
       flex: 1;
+      height: 100%;
       position: relative;
       background-size: 24px 24px;
       background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
@@ -424,7 +431,7 @@
 
     <div style="display:flex; align-items:center; gap:10px;">
       <span id="user-status-tag" class="mono" style="font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); padding:4px 10px; border-radius:8px;"></span>
-      <button onclick="switchView('dashboard')" id="btn-to-dash" class="btn-secondary" style="display:none;">Dashboard</button>
+      <button onclick="switchView('dashboard')" id="btn-to-dash" class="btn-secondary" style="display:none;">← Dashboard</button>
       <button onclick="openCompilerModal()" id="btn-compile" class="btn-glow" style="display:none;">
         <span>Compile Bot (.py)</span>
       </button>
@@ -573,9 +580,8 @@
     </div>
   </div>
 
-  <!-- OBFUSCATED ENGINE & FIREBASE DECODER -->
+  <!-- OBFUSCATED ENGINE & SECURE DECODER -->
   <script>
-    // Obfuscated Firebase Runtime Initializer (Zero Plain Text Keys)
     (function(){
       const _0x5a1b=['QUl6YVN5QUtRRk90dUxpaHg1VFFtd1VuMGFCek5wTG82ZFJySk04','Ym90Zmxvdy1mZjkzNS5maXJlYmFzZWFwcC5jb20=','Ym90Zmxvdy1mZjkzNQ==','Ym90Zmxvdy1mZjkzNS5maXJlYmFzZXN0b3JhZ2UuYXBw','OTA0NzAyNzA4OTQ0','MTo5MDQ3MDI3MDg5NDQ6d2ViOjdjNDM3NDExOGI1NTQ1MTkwZGEyZDU=','Ry1IM1NFR1dZOUYy'];
       const _d = s => atob(s);
@@ -677,32 +683,78 @@
       `).join('');
     }
 
+    // FIXED SCREEN SWITCHING LOGIC (NO BLANK DISPLAY)
     function switchView(view) {
-      document.getElementById('screen-dashboard').classList.toggle('active', view === 'dashboard');
-      document.getElementById('screen-studio').classList.toggle('active', view === 'studio');
-      document.getElementById('btn-to-dash').style.display = view === 'studio' ? 'block' : 'none';
-      document.getElementById('btn-compile').style.display = view === 'studio' ? 'flex' : 'none';
+      const dash = document.getElementById('screen-dashboard');
+      const studio = document.getElementById('screen-studio');
+
+      if (view === 'dashboard') {
+        studio.classList.remove('active');
+        dash.classList.add('active');
+        document.getElementById('btn-to-dash').style.display = 'none';
+        document.getElementById('btn-compile').style.display = 'none';
+      } else {
+        dash.classList.remove('active');
+        studio.classList.add('active');
+        document.getElementById('btn-to-dash').style.display = 'inline-block';
+        document.getElementById('btn-compile').style.display = 'flex';
+      }
     }
 
     function startBlankProject() {
-      nodes = []; connections = [];
+      nodes = [];
+      connections = [];
       document.getElementById('nodes-layer').innerHTML = '';
       drawConnections();
       switchView('studio');
-      createNode('command', 60, 60);
+      
+      // Auto add initial command cleanly
+      setTimeout(() => {
+        createNode('command', 60, 60);
+      }, 50);
     }
 
     function loadTemplate(tplId) {
-      nodes = []; connections = [];
+      nodes = [];
+      connections = [];
       document.getElementById('nodes-layer').innerHTML = '';
       switchView('studio');
-      if (tplId === 'mod_anti_abuse') {
-        createNode('mod_guard', 80, 80);
-      } else {
-        const n1 = createNode('command', 60, 60);
-        const n2 = createNode('buttons', 400, 60);
-        linkNodes(n1.id, n2.id);
-      }
+
+      setTimeout(() => {
+        if (tplId === 'mod_anti_abuse') {
+          createNode('mod_guard', 80, 80);
+        } else if (tplId === 'shop_catalog') {
+          const n1 = createNode('command', 50, 50);
+          const n2 = createNode('buttons', 380, 50);
+          n2.title = "🛍 Select Product Category:";
+          n2.buttons = [
+            { label: "📱 Mobiles & Gadgets", action: "txt", val: "Check out top smartphone deals on our channel!" },
+            { label: "💳 Pay & Buy", action: "url", val: "https://t.me/" }
+          ];
+          reRenderNode(n2.id);
+          linkNodes(n1.id, n2.id);
+        } else if (tplId === 'quiz_dice') {
+          const n1 = createNode('command', 50, 50);
+          const n2 = createNode('buttons', 380, 50);
+          n2.title = "🎲 Game Zone — Roll & Win:";
+          n2.buttons = [
+            { label: "🎲 Roll 6-Sided Dice", action: "num", val: "1-6" },
+            { label: "🎁 Lucky Token (100-999)", action: "num", val: "100-999" }
+          ];
+          reRenderNode(n2.id);
+          linkNodes(n1.id, n2.id);
+        } else {
+          const n1 = createNode('command', 50, 50);
+          const n2 = createNode('buttons', 380, 50);
+          n2.title = "💬 Instant Helpdesk Support:";
+          n2.buttons = [
+            { label: "❓ How to deploy bot?", action: "txt", val: "Run: pip install pyTelegramBotAPI and start bot.py" },
+            { label: "👨‍💻 Contact Admin", action: "url", val: "https://t.me/" }
+          ];
+          reRenderNode(n2.id);
+          linkNodes(n1.id, n2.id);
+        }
+      }, 50);
     }
 
     // Node & Wire Wiring
@@ -737,6 +789,14 @@
       return data;
     }
 
+    function reRenderNode(id) {
+      const n = nodes.find(x => x.id === id);
+      if (!n) return;
+      const el = document.getElementById(id);
+      if (el) el.remove();
+      renderNodeDOM(n);
+    }
+
     function renderNodeDOM(data) {
       const el = document.createElement('div');
       el.id = data.id;
@@ -757,7 +817,7 @@
             <input type="text" value="${data.cmd}" placeholder="/start" oninput="updateData('${data.id}','cmd',this.value)">
             <textarea rows="2" placeholder="Welcome message..." oninput="updateData('${data.id}','reply',this.value)">${data.reply}</textarea>
             <div style="display:flex; justify-content:flex-end;">
-              <button onclick="event.stopPropagation(); startWireConnect('${data.id}', this)" class="btn-secondary" style="font-size:10px; color:#a5b4fc;">⚡ Connect Next</button>
+              <button onclick="event.stopPropagation(); startWireConnect('${data.id}')" class="btn-secondary" style="font-size:10px; color:#a5b4fc;">⚡ Connect Next</button>
             </div>
           </div>
         `;
@@ -774,7 +834,7 @@
             </div>
             <button onclick="addInlineButton('${data.id}')" class="btn-secondary" style="font-size:10px;">+ Add Button</button>
             <div style="display:flex; justify-content:flex-end;">
-              <button onclick="event.stopPropagation(); startWireConnect('${data.id}', this)" class="btn-secondary" style="font-size:10px; color:#a5b4fc;">⚡ Connect Next</button>
+              <button onclick="event.stopPropagation(); startWireConnect('${data.id}')" class="btn-secondary" style="font-size:10px; color:#a5b4fc;">⚡ Connect Next</button>
             </div>
           </div>
         `;
@@ -995,7 +1055,7 @@
       toggleModal('modal-paywall');
     }
 
-    // 2. Realtime UTR Verification & Firebase Logging
+    // Realtime UTR Verification & Firebase Logging
     async function submitUTRForVerification() {
       const utr = document.getElementById('user-utr-input').value.trim();
       if (utr.length !== 12 || !/^\d+$/.test(utr)) {
@@ -1006,7 +1066,7 @@
       btn.innerText = "Submitting...";
       btn.disabled = true;
 
-      const userName = activeUser ? activeUser.name : "Anonymous Dev";
+      const userName = activeUser ? activeUser.name : "Developer";
 
       try {
         await db.collection("payment_requests").doc(utr).set({
@@ -1049,7 +1109,7 @@
       }
     }
 
-    // 3. Secret Admin Panel Flow (Triple-click logo)
+    // Secret Admin Panel Flow (Triple-click logo)
     let logoClicks = 0;
     function registerLogoClick() {
       logoClicks++;
